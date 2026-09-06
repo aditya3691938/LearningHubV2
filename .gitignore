@@ -21,3 +21,5 @@ static/qr_codes/*
 *.db-wal
 instance/
 scratch/
+*.deb
+
