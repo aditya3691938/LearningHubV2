@@ -11,9 +11,9 @@ if __name__ == '__main__':
     
     if env == 'production':
         from waitress import serve
-        print(f"Starting Narayana Learning Hub in PRODUCTION mode on port {port} using Waitress WSGI...")
+        print(f"Starting Aditya Learning Hub in PRODUCTION mode on port {port} using Waitress WSGI...")
         serve(app, host='0.0.0.0', port=port)
     else:
-        print(f"Starting Narayana Learning Hub in DEVELOPMENT mode on http://localhost:{port}...")
+        print(f"Starting Aditya Learning Hub in DEVELOPMENT mode on http://localhost:{port}...")
         app.run(host='0.0.0.0', port=port, debug=True)
 

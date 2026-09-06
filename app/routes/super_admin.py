@@ -452,9 +452,9 @@ def download_sample_csv():
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(['global_id', 'name', 'email', 'department', 'manager_global_id', 'is_admin'])
-    writer.writerow(['10001', 'Amit Patel', 'amit.patel@narayana.com', 'Technology', '', 'yes'])
-    writer.writerow(['10002', 'Sunita Rao', 'sunita.rao@narayana.com', 'Technology', '10001', 'no'])
-    writer.writerow(['10003', 'Vikram Singh', 'vikram.singh@narayana.com', 'L&D', '10001', 'no'])
+    writer.writerow(['10001', 'Amit Patel', 'amit.patel@aditya.com', 'Technology', '', 'yes'])
+    writer.writerow(['10002', 'Sunita Rao', 'sunita.rao@aditya.com', 'Technology', '10001', 'no'])
+    writer.writerow(['10003', 'Vikram Singh', 'vikram.singh@aditya.com', 'L&D', '10001', 'no'])
     
     response = Response(output.getvalue(), mimetype='text/csv')
     response.headers['Content-Disposition'] = 'attachment; filename=users_sample_template.csv'

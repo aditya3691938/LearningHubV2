@@ -1,6 +1,6 @@
-# Narayana LMS: Super Admin Deployment & Scaling Manual
+# Aditya LMS: Super Admin Deployment & Scaling Manual
 
-This document provides system administrators with the blueprints to deploy, secure, and scale the Narayana Learning Management System to **60,000+ active learners** using low-cost and free-tier infrastructure.
+This document provides system administrators with the blueprints to deploy, secure, and scale the Aditya Learning Management System to **60,000+ active learners** using low-cost and free-tier infrastructure.
 
 ---
 
@@ -11,7 +11,7 @@ To prevent server storage exhaustion and network egress bottlenecks, storage and
 ### A. Free & Open-Source Storage: Self-Hosted MinIO
 MinIO is a high-performance, S3-compatible object storage server that you can host on your own server hardware.
 * **Why**: 100% free software. You only pay for the raw hard drives you purchase.
-* **S3-Compatibility**: Narayana LMS connects to MinIO using the exact same standard S3 protocol as AWS.
+* **S3-Compatibility**: Aditya LMS connects to MinIO using the exact same standard S3 protocol as AWS.
 
 #### MinIO Installation via Docker:
 ```bash

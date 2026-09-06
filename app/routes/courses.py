@@ -1825,14 +1825,14 @@ def download_sample_csv(csv_type):
 
     if csv_type == 'assessment':
         writer.writerow(['Serial Number', 'Question', 'Option1', 'Option2', 'Option3', 'Option4', 'Correct Option'])
-        writer.writerow(['1', 'What is the primary function of Narayana LMS?', 'Deliver learning content & track progress', 'Manage server hardware', 'Design vector graphics', 'Calculate payroll', 'Option1'])
+        writer.writerow(['1', 'What is the primary function of Aditya LMS?', 'Deliver learning content & track progress', 'Manage server hardware', 'Design vector graphics', 'Calculate payroll', 'Option1'])
         writer.writerow(['2', 'Which file format is supported for interactive presentation viewing?', '.pptx', '.pdf', '.docx', '.xlsx', 'Option1'])
         writer.writerow(['3', 'What is the passing criteria for Course End Assessment?', '80%', '50%', '10%', '100%', 'Option1'])
     elif csv_type in ['learners', 'enrollment']:
         writer.writerow(['Employee ID', 'Name', 'Email', 'Department', 'Role'])
-        writer.writerow(['10001', 'Rajesh Kumar', 'rajesh.kumar@narayana.com', 'L&D Academics', 'Learner'])
-        writer.writerow(['10002', 'Priya Sharma', 'priya.sharma@narayana.com', 'Engineering', 'Learner'])
-        writer.writerow(['10003', 'Anil Verma', 'anil.verma@narayana.com', 'Quality Assurance', 'Learner'])
+        writer.writerow(['10001', 'Rajesh Kumar', 'rajesh.kumar@aditya.com', 'L&D Academics', 'Learner'])
+        writer.writerow(['10002', 'Priya Sharma', 'priya.sharma@aditya.com', 'Engineering', 'Learner'])
+        writer.writerow(['10003', 'Anil Verma', 'anil.verma@aditya.com', 'Quality Assurance', 'Learner'])
     elif csv_type == 'attendance':
         writer.writerow(['Employee ID', 'Learner Name', 'Status', 'Attendance Date'])
         writer.writerow(['10001', 'Rajesh Kumar', 'Present', '2026-09-05'])
@@ -1845,9 +1845,9 @@ def download_sample_csv(csv_type):
         writer.writerow(['3', 'Share any additional comments or suggestions for improvement', 'TEXT'])
     elif csv_type in ['users', 'user_management']:
         writer.writerow(['Employee ID', 'Name', 'Email', 'Department', 'Role', 'Manager Employee ID'])
-        writer.writerow(['10001', 'Amit Patel', 'amit.patel@narayana.com', 'Technology', 'Super Admin', ''])
-        writer.writerow(['10002', 'Sunita Rao', 'sunita.rao@narayana.com', 'Technology', 'Learner', '10001'])
-        writer.writerow(['10003', 'Rajesh Kumar', 'rajesh.kumar@narayana.com', 'L&D Academics', 'Learner', '10001'])
+        writer.writerow(['10001', 'Amit Patel', 'amit.patel@aditya.com', 'Technology', 'Super Admin', ''])
+        writer.writerow(['10002', 'Sunita Rao', 'sunita.rao@aditya.com', 'Technology', 'Learner', '10001'])
+        writer.writerow(['10003', 'Rajesh Kumar', 'rajesh.kumar@aditya.com', 'L&D Academics', 'Learner', '10001'])
     else:
         writer.writerow(['Serial Number', 'Data1', 'Data2', 'Data3'])
         writer.writerow(['1', 'Sample 1', 'Sample 2', 'Sample 3'])

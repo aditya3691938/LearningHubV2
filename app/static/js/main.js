@@ -1,4 +1,4 @@
-// Narayana L&D System Main JavaScript
+// Aditya L&D System Main JavaScript
 
 // Theme Initialization & Management
 (function () {
@@ -172,7 +172,7 @@ function showDummyModal(tabName) {
                         <i class="fa-solid fa-laptop-code fs-2"></i>
                     </div>
                     <h6 class="fw-bold text-dark mb-2">${tabName} Preview Panel</h6>
-                    <p class="text-muted small mb-0">This tab view is configured as an interactive preview panel for the Narayana L&D Management System.</p>
+                    <p class="text-muted small mb-0">This tab view is configured as an interactive preview panel for the Aditya L&D Management System.</p>
                 </div>
                 <div class="modal-footer border-0 pt-0">
                     <button type="button" class="btn btn-primary w-100 fw-bold" data-bs-dismiss="modal">Close View</button>

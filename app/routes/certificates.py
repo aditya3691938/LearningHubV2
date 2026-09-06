@@ -114,4 +114,4 @@ def download_certificate(cert_id_str):
         date_str = cert.issue_date.strftime('%d-%b-%Y')
         generate_certificate_pdf(learner.name, course.name, date_str, cert.certificate_id, pdf_path)
 
-    return send_file(pdf_path, as_attachment=True, download_name=f"Narayana_Certificate_{cert.certificate_id}.pdf")
+    return send_file(pdf_path, as_attachment=True, download_name=f"Aditya_Certificate_{cert.certificate_id}.pdf")

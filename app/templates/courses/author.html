@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Author Modular Lesson - Narayana Learning Hub{% endblock %}
+{% block title %}Author Modular Lesson - Aditya Learning Hub{% endblock %}
 
 {% block content %}
 <div class="mb-4">
@@ -14,7 +14,7 @@
     </nav>
     <div class="d-flex justify-content-between align-items-center">
         <div>
-            <h3 class="fw-bold text-navy mb-1"><i class="fa-solid fa-cubes text-teal me-2"></i> Narayana RISE: Modular Course Authoring</h3>
+            <h3 class="fw-bold text-navy mb-1"><i class="fa-solid fa-cubes text-teal me-2"></i> Aditya RISE: Modular Course Authoring</h3>
             <p class="text-muted">Assemble interactive typography, accordions, tabs, flashcards, and knowledge checks to build a responsive scrollable lesson.</p>
         </div>
         <a href="{{ url_for('courses.view_course', course_id=course.id) }}" class="btn btn-light border"><i class="fa-solid fa-arrow-left me-1"></i> Back to Course</a>
@@ -519,7 +519,7 @@ function addBlock(type) {
     } else if (type === 'video_carousel') {
         newBlock.items = [{ url: "https://www.youtube.com/embed/dQw4w9WgXcQ", title: "Introduction Video Lecture" }];
     } else if (type === 'animated_backdrop') {
-        newBlock.title = "Narayana Digital Hub";
+        newBlock.title = "Aditya Digital Hub";
         newBlock.body = "<p>Premium animated interactive content page</p>";
         newBlock.animation_type = "gradient";
     }

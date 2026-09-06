@@ -19,7 +19,7 @@ from app.services.learning_wall_service import create_completion_post
 
 learners_bp = Blueprint('learners', __name__)
 
-# --- ADMIN LEARNER MANAGEMENT ---
+# --- ADMIN LEARNER MANAGEMENT   ---
 
 @learners_bp.route('/')
 @admin_required
@@ -1468,4 +1468,4 @@ def view_learner_profile():
         learner=learner,
         total_enrollments=total_enrollments,
         completed_enrollments=completed_enrollments
-    )
+    )
