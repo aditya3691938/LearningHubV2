@@ -21,6 +21,8 @@ def init_db_and_seed(app):
 
         # Safe schema column additions for SQLite compatibility
         alter_statements = [
+            "ALTER TABLE learners ADD COLUMN email VARCHAR(120);",
+            "ALTER TABLE learners ADD COLUMN profile_picture VARCHAR(255);",
             "ALTER TABLE learners ADD COLUMN date_of_birth DATE;",
             "ALTER TABLE course_lessons ADD COLUMN duration_hours FLOAT DEFAULT 1.0;",
             "ALTER TABLE course_lessons ADD COLUMN min_time_minutes FLOAT DEFAULT 1.0;",
