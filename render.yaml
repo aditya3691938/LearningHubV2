@@ -1,0 +1,24 @@
+databases:
+  - name: lms-db
+    databaseName: lms
+    user: lms_user
+    plan: free
+
+services:
+  - type: web
+    name: aditya-lms
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn run:app
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: lms-db
+          property: connectionString
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
