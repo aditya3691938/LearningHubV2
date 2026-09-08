@@ -17,6 +17,28 @@ class StorageService:
         )
 
     @staticmethod
+    def get_file_url(filename, folder='materials'):
+        """
+        Returns the public URL for the file if using S3,
+        or a local endpoint route fallback.
+        """
+        provider = current_app.config.get('STORAGE_PROVIDER', 'local')
+        if provider == 's3':
+            bucket = current_app.config.get('S3_BUCKET')
+            endpoint = current_app.config.get('S3_ENDPOINT_URL')
+            # For Backblaze B2, the public URL is typically:
+            # https://f005.backblazeb2.com/file/{bucket}/{folder}/{filename}
+            # Or using the S3 endpoint directly if it allows public access:
+            # {endpoint}/{bucket}/{folder}/{filename}
+            if endpoint:
+                return f"{endpoint}/{bucket}/{folder}/{filename}"
+            return f"https://s3.amazonaws.com/{bucket}/{folder}/{filename}"
+        else:
+            # For local, it depends on the router, but usually it's served via specific routes.
+            # We'll return None and let the route handle local send_file
+            return None
+
+    @staticmethod
     def upload_file(file_obj, filename, folder='materials'):
         """
         Upload file locally or to S3/MinIO bucket.
@@ -30,8 +52,20 @@ class StorageService:
             
             # Reset seek pointer to start of file
             file_obj.seek(0)
-            s3.upload_fileobj(file_obj, bucket, key)
-            return f"s3://{bucket}/{key}"
+            
+            # For Backblaze B2 public buckets, we don't need explicit ACLs if the bucket is public,
+            # but we can specify ExtraArgs={'ContentType': file_obj.content_type} if available.
+            content_type = getattr(file_obj, 'content_type', 'application/octet-stream')
+            if not content_type:
+                content_type = 'application/octet-stream'
+                
+            s3.upload_fileobj(
+                file_obj, 
+                bucket, 
+                key,
+                ExtraArgs={'ContentType': content_type}
+            )
+            return key
         else:
             # Fallback to local storage
             upload_dir = os.path.join(current_app.root_path, '..', 'uploads', folder)
@@ -44,6 +78,7 @@ class StorageService:
     def download_file(filename, folder='materials'):
         """
         Stream/Read file content from S3/MinIO or local filesystem.
+        Returns a file-like object (BytesIO) or file descriptor.
         """
         provider = current_app.config.get('STORAGE_PROVIDER', 'local')
         

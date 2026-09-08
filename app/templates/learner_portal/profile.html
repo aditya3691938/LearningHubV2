@@ -18,7 +18,7 @@
             <div class="card border-0 shadow-sm text-center p-4">
                 <div class="position-relative d-inline-block mx-auto mb-3">
                     {% if learner.profile_picture %}
-                        <img src="{{ url_for('static', filename='uploads/profiles/' + learner.profile_picture) }}" alt="Profile" class="rounded-circle border border-2 border-teal shadow" style="width: 120px; height: 120px; object-fit: cover;">
+                        <img src="{{ url_for('learners.download_profile_pic', filename=learner.profile_picture) }}" alt="Profile" class="rounded-circle border border-2 border-teal shadow" style="width: 120px; height: 120px; object-fit: cover;">
                     {% else %}
                         <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200" alt="Profile" class="rounded-circle border border-2 border-teal shadow" style="width: 120px; height: 120px; object-fit: cover;">
                     {% endif %}

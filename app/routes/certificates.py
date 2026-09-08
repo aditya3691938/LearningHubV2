@@ -69,9 +69,8 @@ def upload_external():
         import uuid
         ext = os.path.splitext(file.filename)[1]
         pdf_filename = f"ext_cert_{uuid.uuid4().hex}{ext}"
-        upload_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'external_certs')
-        os.makedirs(upload_dir, exist_ok=True)
-        file.save(os.path.join(upload_dir, pdf_filename))
+        from app.services.storage_service import StorageService
+        StorageService.upload_file(file, pdf_filename, folder='external_certs')
         
     try:
         date_earned = datetime.strptime(date_earned_str, '%Y-%m-%d').date()
@@ -106,6 +105,13 @@ def download_certificate(cert_id_str):
     course = cert.course
 
     cert_filename = f"cert_{cert.certificate_id}.pdf"
+    
+    from app.services.storage_service import StorageService
+    url = StorageService.get_file_url(cert_filename, 'certificates')
+    if url:
+        return redirect(url)
+        
+    # Local fallback or generation
     pdf_dir = os.path.join(certificates_bp.root_path, '..', '..', 'uploads', 'certificates')
     os.makedirs(pdf_dir, exist_ok=True)
     pdf_path = os.path.join(pdf_dir, cert_filename)
@@ -113,5 +119,5 @@ def download_certificate(cert_id_str):
     if not os.path.exists(pdf_path):
         date_str = cert.issue_date.strftime('%d-%b-%Y')
         generate_certificate_pdf(learner.name, course.name, date_str, cert.certificate_id, pdf_path)
-
+        
     return send_file(pdf_path, as_attachment=True, download_name=f"Aditya_Certificate_{cert.certificate_id}.pdf")

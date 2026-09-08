@@ -1078,13 +1078,31 @@ def submit_feedback(repo_id):
                 if not existing_cert:
                     cert_id = Certificate.generate_certificate_id()
                     cert_filename = f"cert_{cert_id}.pdf"
-                    cert_file_path = os.path.join(learners_bp.root_path, '..', '..', 'uploads', 'certificates', cert_filename)
-                    os.makedirs(os.path.dirname(cert_file_path), exist_ok=True)
+                    import tempfile
+                    from app.services.storage_service import StorageService
 
                     learner_obj = Learner.query.get(learner_id)
                     date_str = datetime.now().strftime('%d-%b-%Y')
+                    
                     try:
-                        generate_certificate_pdf(learner_obj.name, course.name, date_str, cert_id, cert_file_path)
+                        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+                            tmp_path = tmp_file.name
+                        generate_certificate_pdf(learner_obj.name, course.name, date_str, cert_id, tmp_path)
+                        
+                        # Upload to StorageService
+                        with open(tmp_path, 'rb') as f_obj:
+                            class MockFileObj:
+                                def __init__(self, f_obj, c_type):
+                                    self.f = f_obj
+                                    self.content_type = c_type
+                                def read(self, *args): return self.f.read(*args)
+                                def seek(self, *args): return self.f.seek(*args)
+                                def save(self, path):
+                                    with open(path, 'wb') as out:
+                                        out.write(self.f.read())
+                            mock_file = MockFileObj(f_obj, 'application/pdf')
+                            StorageService.upload_file(mock_file, cert_filename, folder='certificates')
+                        os.unlink(tmp_path)
                     except Exception:
                         pass
 
@@ -1493,9 +1511,8 @@ def view_learner_profile():
             
             ext = os.path.splitext(profile_pic.filename)[1]
             pic_filename = f"profile_{learner.id}_{uuid.uuid4().hex[:8]}{ext}"
-            upload_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'profiles')
-            os.makedirs(upload_dir, exist_ok=True)
-            profile_pic.save(os.path.join(upload_dir, pic_filename))
+            from app.services.storage_service import StorageService
+            StorageService.upload_file(profile_pic, pic_filename, folder='profiles')
             learner.profile_picture = pic_filename
             updated = True
 
@@ -1507,11 +1524,27 @@ def view_learner_profile():
     
     # Get active/completed enrollments count
     total_enrollments = LearnerEnrollment.query.filter_by(learner_id=learner.id).count()
-    completed_enrollments = LearnerEnrollment.query.filter_by(learner_id=learner.id, completion_status='Completed').count()
+    completed_enrollments = LearnerEnrollment.query.filter_by(learner_id=learner.id, completion_status='Completed').count()    
     
     return render_template(
         'learner_portal/profile.html',
         learner=learner,
         total_enrollments=total_enrollments,
-        completed_enrollments=completed_enrollments
+        completed_enrollments=completed_enrollments,
+        certificates=certificates,
+        recent_activities=recent_activities,
+        learner_theme=learner_theme
     )
+
+
+@learners_bp.route('/profile_picture/<filename>')
+def download_profile_pic(filename):
+    from app.services.storage_service import StorageService
+    url = StorageService.get_file_url(filename, 'profiles')
+    if url:
+        return redirect(url)
+    # Local fallback
+    from flask import send_from_directory, current_app
+    import os
+    upload_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'profiles')
+    return send_from_directory(upload_dir, filename)

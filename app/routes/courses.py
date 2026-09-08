@@ -98,9 +98,8 @@ def create_course():
             ext = os.path.splitext(thumb_file.filename)[1].lower()
             if ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp']:
                 thumb_filename = f"thumb_{new_course.course_id}_{uuid.uuid4().hex[:8]}{ext}"
-                thumb_dir = os.path.join(current_app.root_path, '..', 'uploads', 'thumbnails')
-                os.makedirs(thumb_dir, exist_ok=True)
-                thumb_file.save(os.path.join(thumb_dir, thumb_filename))
+                from app.services.storage_service import StorageService
+                StorageService.upload_file(thumb_file, thumb_filename, folder='thumbnails')
                 new_course.thumbnail_filename = thumb_filename
 
         # Live Online & Live In Person duration set directly by admin at course level
@@ -250,6 +249,11 @@ def recalculate_course_duration(course_id):
 
 @courses_bp.route('/thumbnail/<filename>')
 def download_thumbnail(filename):
+    from app.services.storage_service import StorageService
+    url = StorageService.get_file_url(filename, 'thumbnails')
+    if url:
+        return redirect(url)
+    
     thumb_dir = os.path.join(current_app.root_path, '..', 'uploads', 'thumbnails')
     file_path = os.path.join(thumb_dir, filename)
     if os.path.exists(file_path):
@@ -481,17 +485,21 @@ def add_lesson_courseware(lesson_id):
         if c_type == 'SCORM' or ext == '.zip':
             from app.services.scorm_service import process_scorm_package
             scorm_id_str = f"scorm_{short_id}"
+            
+            # The process_scorm_package will extract to a temp folder and upload everything to B2
             upload_base_folder = os.path.abspath(os.path.join(current_app.root_path, '..', 'uploads'))
             launch_href, err_msg = process_scorm_package(file_obj, scorm_id_str, upload_base_folder)
             if err_msg:
                 flash(err_msg, "danger")
                 return redirect(url_for('courses.view_course', course_id=lesson.course_id))
+            
+            # The launch_href is relative to the scorm root, e.g. "index_lms.html"
             filename = scorm_id_str
             external_url = launch_href
             c_type = 'SCORM'
         else:
-            save_path = os.path.join(current_app.config['MATERIALS_FOLDER'], filename)
-            file_obj.save(save_path)
+            from app.services.storage_service import StorageService
+            StorageService.upload_file(file_obj, filename, folder='materials')
             
             # Also create a non-downloadable CourseMaterial record for inline viewing
             mat = CourseMaterial(
@@ -842,9 +850,8 @@ def edit_course(course_id):
             ext = os.path.splitext(thumb_file.filename)[1].lower()
             if ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp']:
                 thumb_filename = f"thumb_{course.course_id}_{uuid.uuid4().hex[:8]}{ext}"
-                thumb_dir = os.path.join(current_app.root_path, '..', 'uploads', 'thumbnails')
-                os.makedirs(thumb_dir, exist_ok=True)
-                thumb_file.save(os.path.join(thumb_dir, thumb_filename))
+                from app.services.storage_service import StorageService
+                StorageService.upload_file(thumb_file, thumb_filename, folder='thumbnails')
                 course.thumbnail_filename = thumb_filename
 
         # Live Online & Live In Person duration defined directly by admin at course level
@@ -1515,6 +1522,11 @@ def delete_material(material_id):
 
 @courses_bp.route('/scorm/content/<scorm_id_str>/<path:filename>')
 def serve_scorm_file(scorm_id_str, filename):
+    from app.services.storage_service import StorageService
+    url = StorageService.get_file_url(filename, folder=f"scorm/{scorm_id_str}")
+    if url:
+        return redirect(url)
+    
     scorm_dir = os.path.abspath(os.path.join(current_app.root_path, '..', 'uploads', 'scorm', scorm_id_str))
     return send_from_directory(scorm_dir, filename)
 
@@ -1613,9 +1625,8 @@ def author_lesson(course_id, lesson_id):
             if doc_file and doc_file.filename:
                 # Save to uploads folder
                 filename = f"doc_{uuid.uuid4().hex}_{doc_file.filename}"
-                upload_dir = os.path.join(current_app.root_path, '..', 'uploads', 'materials')
-                os.makedirs(upload_dir, exist_ok=True)
-                doc_file.save(os.path.join(upload_dir, filename))
+                from app.services.storage_service import StorageService
+                StorageService.upload_file(doc_file, filename, folder='materials')
                 
                 # Determine courseware type
                 ext = doc_file.filename.split('.')[-1].lower()
