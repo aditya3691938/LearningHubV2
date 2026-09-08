@@ -108,6 +108,14 @@ def create_app(config_class=Config):
             except Exception:
                 pass
 
+        open_tickets_count = 0
+        if session.get('admin_logged_in', False):
+            try:
+                from app.models.issue import LmsIssue
+                open_tickets_count = LmsIssue.query.filter_by(status='Open').count()
+            except Exception:
+                pass
+
         # Resolve learner theme preference
         learner_theme = 'navy'
         if 'learner_theme' in session:
@@ -130,7 +138,8 @@ def create_app(config_class=Config):
             'unread_notif_count': unread_notif_count,
             'safe_endpoint': request.endpoint or '',
             'enable_content_authoring': current_app.config.get('ENABLE_CONTENT_AUTHORING', False),
-            'learner_theme': learner_theme
+            'learner_theme': learner_theme,
+            'open_tickets_count': open_tickets_count
         }
 
     # Custom error handlers

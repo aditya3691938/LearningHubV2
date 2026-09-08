@@ -66,10 +66,10 @@
                         </td>
                         <td class="px-3 py-3 text-end">
                             {% if issue.status == 'Open' %}
-                            <form action="{{ url_for('super_admin.resolve_issue', issue_id=issue.id) }}" method="POST" class="d-inline">
+                            <form action="{{ url_for('dashboard.resolve_issue', issue_id=issue.id) }}" method="POST" class="d-inline">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-xs btn-success fw-bold py-1 px-2.5 rounded-3 shadow-xs">
-                                    <i class="fa-solid fa-check me-1"></i> Mark Cleared
+                                    <i class="fa-solid fa-check me-1"></i> Issue Resolved
                                 </button>
                             </form>
                             {% else %}

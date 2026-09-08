@@ -1185,8 +1185,17 @@ def download_material(material_id):
     return redirect(url_for('courses.view_course', course_id=mat.course_id))
 
 
-@courses_bp.route('/courseware/<int:courseware_id>/raw_file')
+@courses_bp.route('/courseware/<int:courseware_id>/raw_file', methods=['GET', 'HEAD', 'OPTIONS'])
 def get_courseware_raw_file(courseware_id):
+    if request.method == 'OPTIONS':
+        resp = jsonify({})
+        resp.status_code = 204
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        resp.headers['Access-Control-Allow-Methods'] = 'GET, HEAD, OPTIONS'
+        resp.headers['Access-Control-Allow-Headers'] = 'Range, Content-Type'
+        resp.headers['Access-Control-Max-Age'] = '86400'
+        return resp
+
     cw = LessonCourseware.query.get_or_404(courseware_id)
     if cw.filename:
         file_path = os.path.join(current_app.config['MATERIALS_FOLDER'], cw.filename)
@@ -1207,8 +1216,17 @@ def get_courseware_raw_file(courseware_id):
     return jsonify({'error': 'File not found'}), 404
 
 
-@courses_bp.route('/material/<int:material_id>/raw_file')
+@courses_bp.route('/material/<int:material_id>/raw_file', methods=['GET', 'HEAD', 'OPTIONS'])
 def get_material_raw_file(material_id):
+    if request.method == 'OPTIONS':
+        resp = jsonify({})
+        resp.status_code = 204
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        resp.headers['Access-Control-Allow-Methods'] = 'GET, HEAD, OPTIONS'
+        resp.headers['Access-Control-Allow-Headers'] = 'Range, Content-Type'
+        resp.headers['Access-Control-Max-Age'] = '86400'
+        return resp
+
     mat = CourseMaterial.query.get_or_404(material_id)
     if mat.filename:
         file_path = os.path.join(current_app.config['MATERIALS_FOLDER'], mat.filename)
@@ -1824,10 +1842,10 @@ def download_sample_csv(csv_type):
     filename = f"{csv_type}_sample_template.csv"
 
     if csv_type == 'assessment':
-        writer.writerow(['Serial Number', 'Question', 'Option1', 'Option2', 'Option3', 'Option4', 'Correct Option'])
-        writer.writerow(['1', 'What is the primary function of Aditya LMS?', 'Deliver learning content & track progress', 'Manage server hardware', 'Design vector graphics', 'Calculate payroll', 'Option1'])
-        writer.writerow(['2', 'Which file format is supported for interactive presentation viewing?', '.pptx', '.pdf', '.docx', '.xlsx', 'Option1'])
-        writer.writerow(['3', 'What is the passing criteria for Course End Assessment?', '80%', '50%', '10%', '100%', 'Option1'])
+        writer.writerow(['Serial Number', 'Question', 'Option1', 'Option2', 'Option3', 'Option4', 'Option5', 'Correct Option'])
+        writer.writerow(['1', 'What is the primary function of Aditya LMS?', 'Deliver learning content & track progress', 'Manage server hardware', 'Design vector graphics', 'Calculate payroll', '', 'Option1'])
+        writer.writerow(['2', 'Which file format is supported for interactive presentation viewing?', '.pptx', '.pdf', '.docx', '.xlsx', '.mp4', 'Option1'])
+        writer.writerow(['3', 'What is the passing criteria for Course End Assessment?', '80%', '50%', '10%', '100%', '', 'Option1'])
     elif csv_type in ['learners', 'enrollment']:
         writer.writerow(['Employee ID', 'Name', 'Email', 'Department', 'Role'])
         writer.writerow(['10001', 'Rajesh Kumar', 'rajesh.kumar@aditya.com', 'L&D Academics', 'Learner'])

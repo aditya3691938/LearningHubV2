@@ -517,6 +517,7 @@
                                             <td class="small text-muted">
                                                 1: {{ q.option1 }} | 2: {{ q.option2 }}<br>
                                                 3: {{ q.option3 }} | 4: {{ q.option4 }}
+                                                {% if q.option5 %}<br>5: {{ q.option5 }}{% endif %}
                                             </td>
                                             <td><span class="badge bg-success font-monospace">{{ q.correct_option }}</span></td>
                                         </tr>
@@ -874,13 +875,8 @@
                                         <h6 class="fw-bold text-navy mb-1">{{ cls.class_name }}</h6>
                                         <p class="font-monospace text-gold bg-dark d-inline-block px-3 py-1 rounded small mb-3">{{ cls.class_id }}</p>
                                         <p class="text-muted small mb-3">Learners scan this QR code in class to authenticate & mark attendance automatically.</p>
-                                        <div class="d-flex justify-content-center gap-2">
-                                            <a href="{{ url_for('classes.download_qr', class_id_str=cls.class_id) }}" class="btn btn-navy bg-navy text-white btn-sm fw-bold px-3">
-                                                <i class="fa-solid fa-download me-1"></i> Download PNG
-                                            </a>
-                                            <a href="http://localhost:5000/learner/login?classId={{ cls.class_id }}" target="_blank" class="btn btn-outline-primary btn-sm fw-bold px-3">
-                                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Open Scan URL
-                                            </a>
+                                        <div class="text-center mt-3">
+                                            <img src="/static/qr_codes/qr_{{ cls.class_id }}.png" alt="QR Code" class="img-fluid border p-2 rounded shadow-sm" style="max-width: 250px;" onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=http://localhost:5000/learner/login?classId={{ cls.class_id }}'">
                                         </div>
                                     </div>
                                 </div>
@@ -1116,5 +1112,25 @@
         initAssignmentForms();
     }
 })();
+</script>
+<!-- Select2 CSS & JS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Select2 on the facilitator dropdowns
+    $('select[name="facilitator_id"]').select2({
+        placeholder: '-- Search Lead Facilitator --',
+        allowClear: true,
+        width: '100%'
+    });
+    $('select[name="co_facilitator_id"]').select2({
+        placeholder: '-- Search Co-Facilitator --',
+        allowClear: true,
+        width: '100%'
+    });
+});
 </script>
 {% endblock %}

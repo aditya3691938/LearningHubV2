@@ -17,12 +17,16 @@
         <div class="col-lg-4">
             <div class="card border-0 shadow-sm text-center p-4">
                 <div class="position-relative d-inline-block mx-auto mb-3">
-                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200" alt="Admin Profile" class="rounded-circle border border-2 border-teal shadow-xs" style="width: 120px; height: 120px; object-fit: cover;">
+                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200"
+                        alt="Admin Profile" class="rounded-circle border border-2 border-teal shadow-xs"
+                        style="width: 120px; height: 120px; object-fit: cover;">
                 </div>
                 <h4 class="fw-bold text-dark mb-1">L&D Administrator</h4>
                 <p class="text-muted small mb-3">@admin</p>
-                <span class="badge bg-teal-light text-teal border border-teal-subtle px-3 py-1.5 rounded-pill fw-bold mb-4">L&D Administrator</span>
-                
+                <span
+                    class="badge bg-teal-light text-teal border border-teal-subtle px-3 py-1.5 rounded-pill fw-bold mb-4">L&D
+                    Administrator</span>
+
                 <div class="border-top pt-3 text-start">
                     <div class="mb-2">
                         <small class="text-muted d-block">Role Permissions</small>
@@ -64,10 +68,12 @@
 
             <!-- Console shortcuts -->
             <div class="card border-0 shadow-sm p-4">
-                <h5 class="fw-bold text-navy mb-3"><i class="fa-solid fa-user-shield text-teal me-2"></i> Admin Controls Directory</h5>
+                <h5 class="fw-bold text-navy mb-3"><i class="fa-solid fa-user-shield text-teal me-2"></i> Admin Controls
+                    Directory</h5>
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <a href="{{ url_for('courses.list_courses') }}" class="p-3 border rounded-3 text-start bg-light h-100 d-flex align-items-center text-decoration-none">
+                        <a href="{{ url_for('courses.list_courses') }}"
+                            class="p-3 border rounded-3 text-start bg-light h-100 d-flex align-items-center text-decoration-none">
                             <i class="fa-solid fa-cubes text-teal fs-4 me-3"></i>
                             <div>
                                 <strong class="text-dark d-block">Manage Courses</strong>
@@ -76,7 +82,8 @@
                         </a>
                     </div>
                     <div class="col-md-6">
-                        <a href="{{ url_for('learners.list_learners') }}" class="p-3 border rounded-3 text-start bg-light h-100 d-flex align-items-center text-decoration-none">
+                        <a href="{{ url_for('learners.list_learners') }}"
+                            class="p-3 border rounded-3 text-start bg-light h-100 d-flex align-items-center text-decoration-none">
                             <i class="fa-solid fa-users text-teal fs-4 me-3"></i>
                             <div>
                                 <strong class="text-dark d-block">Learner Profiles</strong>
@@ -85,7 +92,8 @@
                         </a>
                     </div>
                     <div class="col-md-6">
-                        <a href="{{ url_for('super_admin.list_issues') }}" class="p-3 border rounded-3 text-start bg-light h-100 d-flex align-items-center text-decoration-none">
+                        <a href="{{ url_for('dashboard.list_issues') }}"
+                            class="p-3 border rounded-3 text-start bg-light h-100 d-flex align-items-center text-decoration-none">
                             <i class="fa-solid fa-headset text-danger fs-4 me-3"></i>
                             <div>
                                 <strong class="text-dark d-block">Helpdesk Tickets</strong>
@@ -94,7 +102,8 @@
                         </a>
                     </div>
                     <div class="col-md-6">
-                        <a href="{{ url_for('reports.index') }}" class="p-3 border rounded-3 text-start bg-light h-100 d-flex align-items-center text-decoration-none">
+                        <a href="{{ url_for('reports.index') }}"
+                            class="p-3 border rounded-3 text-start bg-light h-100 d-flex align-items-center text-decoration-none">
                             <i class="fa-solid fa-chart-pie text-teal fs-4 me-3"></i>
                             <div>
                                 <strong class="text-dark d-block">Analytics Reports</strong>

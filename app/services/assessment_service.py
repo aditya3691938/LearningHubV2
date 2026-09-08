@@ -4,7 +4,7 @@ import io
 def parse_assessment_csv(file_stream, filename=None):
     """
     Parses assessment CSV or Excel file with columns:
-    Serial Number, Question, Option 1 (or Option1), Option 2 (or Option 2), Option 3 (or Option 3), Option 4 (or Option 4), Correct Option
+    Serial Number, Question, Option 1 (or Option1), Option 2 (or Option 2), Option 3 (or Option 3), Option 4 (or Option 4), Option 5 (or Option 5) (Optional), Correct Option
     Returns tuple: (questions_list, errors_list)
     """
     questions = []
@@ -37,6 +37,8 @@ def parse_assessment_csv(file_stream, filename=None):
                 col_mapping[col] = 'Option3'
             elif cleaned in ['option4', 'opt4']:
                 col_mapping[col] = 'Option4'
+            elif cleaned in ['option5', 'opt5']:
+                col_mapping[col] = 'Option5'
             elif cleaned in ['serialnumber', 'slno', 'sno', 'sn', 'srno']:
                 col_mapping[col] = 'Serial Number'
             elif cleaned in ['correctoption', 'answer', 'correctanswer', 'correct']:
@@ -51,7 +53,7 @@ def parse_assessment_csv(file_stream, filename=None):
         
         # Check if required columns exist or map by position if 7 columns
         if len(df.columns) >= 7 and not all(c in df.columns for c in required_cols):
-            # Positional mapping
+            # Positional mapping (without Option 5)
             df.columns = ['Serial Number', 'Question', 'Option1', 'Option2', 'Option3', 'Option4', 'Correct Option'] + list(df.columns[7:])
 
         for idx, row in df.iterrows():
@@ -61,6 +63,9 @@ def parse_assessment_csv(file_stream, filename=None):
             opt2 = str(row.get('Option2', '')).strip()
             opt3 = str(row.get('Option3', '')).strip()
             opt4 = str(row.get('Option4', '')).strip()
+            opt5 = str(row.get('Option5', '')).strip()
+            if opt5.lower() == 'nan':
+                opt5 = ''
             correct = str(row.get('Correct Option', '')).strip()
 
             if not question_text or question_text.lower() == 'nan':
@@ -85,6 +90,8 @@ def parse_assessment_csv(file_stream, filename=None):
                 correct = 'Option3'
             elif correct_clean.lower() in ['4', 'option4', 'opt4', 'd']:
                 correct = 'Option4'
+            elif correct_clean.lower() in ['5', 'option5', 'opt5', 'e']:
+                correct = 'Option5'
 
             serial_num = int(row.get('Serial Number', row_num)) if str(row.get('Serial Number', '')).isdigit() else row_num
 
@@ -95,6 +102,7 @@ def parse_assessment_csv(file_stream, filename=None):
                 'option2': opt2,
                 'option3': opt3,
                 'option4': opt4,
+                'option5': opt5 if opt5 else None,
                 'correct_option': correct
             })
 
@@ -136,6 +144,8 @@ def evaluate_assessment(questions, user_answers, pass_percentage=80.0):
                 opt_key = 'option3'
             elif target_clean in ['option4', 'opt4', '4', 'd']:
                 opt_key = 'option4'
+            elif target_clean in ['option5', 'opt5', '5', 'e']:
+                opt_key = 'option5'
 
             if opt_key:
                 opt_val = str(getattr(q, opt_key, '') or '').strip().lower()
@@ -145,7 +155,7 @@ def evaluate_assessment(questions, user_answers, pass_percentage=80.0):
             else:
                 # 3. Check if target was option text matching user answer
                 matched = False
-                for opt_attr in ['option1', 'option2', 'option3', 'option4']:
+                for opt_attr in ['option1', 'option2', 'option3', 'option4', 'option5']:
                     opt_val = str(getattr(q, opt_attr, '') or '').strip().lower()
                     if target == opt_val and (user_ans_clean == opt_attr or user_ans == opt_val):
                         correct_count += 1

@@ -1,0 +1,834 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PPTonPage — embed an interactive PPTX on any page</title>
+<meta name="description" content="A drop-in web component that renders a .pptx URL inline, preserving animations, slide transitions and hyperlinks. One script tag, no server-side conversion.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23141B2D'/%3E%3Crect x='7' y='9' width='14' height='11' rx='1.5' fill='none' stroke='%23FAF8F5' stroke-width='2'/%3E%3Cpath d='M13 22h12' stroke='%232E8B8B' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #141B2D;
+    --ink-soft: #2A3550;
+    --paper: #FAF8F5;
+    --paper-alt: #F2EEE8;
+    --teal: #2E8B8B;
+    --teal-deep: #226A6A;
+    --warm: #D96E3F;
+    --muted: #6B7485;
+    --rule: #DDD7CE;
+
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: "Satoshi", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+    --measure: 68ch;
+    --gutter: clamp(20px, 5vw, 64px);
+  }
+
+  * { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  a { color: var(--teal-deep); text-decoration-thickness: 1px; text-underline-offset: 2.5px; }
+  a:hover { color: var(--warm); }
+
+  .wrap { max-width: 1140px; margin: 0 auto; padding: 0 var(--gutter); }
+
+  /* ---------- header ---------- */
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 26px 0 0;
+  }
+
+  .logo { display: flex; align-items: center; gap: 11px; color: var(--ink); text-decoration: none; }
+  .logo svg { width: 30px; height: 30px; display: block; }
+  .logo b { font-weight: 700; font-size: 17px; letter-spacing: -0.015em; }
+  .logo span { color: var(--muted); font-weight: 500; }
+
+  .header-links { display: flex; gap: 22px; font-size: 14.5px; font-weight: 500; }
+  .header-links a { color: var(--ink-soft); text-decoration: none; }
+  .header-links a:hover { color: var(--teal-deep); }
+
+  /* ---------- hero ---------- */
+
+  .hero { padding: clamp(48px, 8vw, 92px) 0 clamp(28px, 4vw, 44px); }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--teal-deep);
+    margin: 0 0 22px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 26px;
+    height: 2px;
+    background: var(--teal);
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(38px, 6.4vw, 68px);
+    line-height: 1.03;
+    letter-spacing: -0.032em;
+    font-weight: 700;
+    max-width: 17ch;
+  }
+  h1 em { font-style: normal; color: var(--teal-deep); }
+
+  .lede {
+    margin: 24px 0 0;
+    font-size: clamp(17px, 2vw, 20.5px);
+    line-height: 1.6;
+    color: var(--ink-soft);
+    max-width: 58ch;
+  }
+
+  /* ---------- viewer ---------- */
+
+  .stage-block { padding: 8px 0 clamp(40px, 6vw, 72px); }
+
+  .stage-frame {
+    position: relative;
+    border-radius: 14px;
+    background: var(--ink);
+    padding: 10px;
+    box-shadow: 0 1px 2px rgba(20, 27, 45, 0.1), 0 18px 50px -12px rgba(20, 27, 45, 0.3);
+  }
+
+  pptx-viewer { --pptx-radius: 7px; }
+
+  .stage-hint {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    margin: 15px 2px 0;
+    font-size: 13.5px;
+    color: var(--muted);
+  }
+  .stage-hint kbd {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    background: var(--paper-alt);
+    border: 1px solid var(--rule);
+    border-bottom-width: 2px;
+    border-radius: 5px;
+    padding: 1.5px 6px;
+    color: var(--ink-soft);
+  }
+
+  /* ---------- sections ---------- */
+
+  section { padding: clamp(44px, 6.5vw, 84px) 0; border-top: 1px solid var(--rule); }
+
+  h2 {
+    margin: 0 0 8px;
+    font-size: clamp(25px, 3.4vw, 35px);
+    line-height: 1.15;
+    letter-spacing: -0.024em;
+    font-weight: 700;
+  }
+
+  .section-intro { margin: 0 0 34px; color: var(--muted); max-width: var(--measure); font-size: 16.5px; }
+
+  h3 { margin: 0 0 10px; font-size: 17px; font-weight: 700; letter-spacing: -0.011em; }
+
+  /* ---------- code ---------- */
+
+  pre {
+    margin: 0;
+    padding: 20px 22px;
+    background: var(--ink);
+    color: #E8EAF0;
+    border-radius: 11px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 13.5px;
+    line-height: 1.72;
+    tab-size: 2;
+  }
+  pre code { font-family: inherit; }
+  .tok-tag { color: #7FD1C4; }
+  .tok-attr { color: #E3B778; }
+  .tok-str { color: #C9E0A6; }
+  .tok-com { color: #737E96; font-style: italic; }
+  .tok-kw { color: #E58F62; }
+
+  .code-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: 0.075em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 10px 2px;
+  }
+
+  .code-pair { display: grid; gap: 28px; grid-template-columns: 1fr; }
+  .code-pair > * { min-width: 0; }
+  .grid > .cell { min-width: 0; }
+  pre { max-width: 100%; }
+  @media (min-width: 900px) { .code-pair { grid-template-columns: 1fr 1fr; gap: 26px; } }
+
+  /* ---------- feature grid ---------- */
+
+  .grid { display: grid; gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; }
+  @media (min-width: 640px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 980px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+
+  .cell { background: var(--paper); padding: 26px 24px 28px; }
+  .cell p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.62; }
+  .cell-icon {
+    width: 30px; height: 30px; margin-bottom: 15px;
+    color: var(--teal-deep);
+  }
+  .cell-icon svg { width: 100%; height: 100%; display: block; }
+
+  /* ---------- reference table ---------- */
+
+  .table-scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14.5px; min-width: 480px; }
+  caption { text-align: left; padding: 16px 20px 0; font-weight: 700; font-size: 15px; }
+  th, td { text-align: left; padding: 11px 20px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  thead th {
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.07em;
+    text-transform: uppercase; color: var(--muted); font-weight: 500;
+    background: var(--paper-alt);
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  td code, p code, li code {
+    font-family: var(--mono); font-size: 0.88em;
+    background: var(--paper-alt); border: 1px solid var(--rule);
+    padding: 1px 5px; border-radius: 4px; white-space: nowrap;
+  }
+  td:first-child code { color: var(--teal-deep); }
+
+  /* ---------- notes ---------- */
+
+  ul.notes { margin: 0; padding: 0; list-style: none; display: grid; gap: 13px; max-width: var(--measure); }
+  ul.notes li { position: relative; padding-left: 26px; color: var(--ink-soft); font-size: 15.5px; line-height: 1.6; }
+  ul.notes li::before {
+    content: ""; position: absolute; left: 4px; top: 9px;
+    width: 7px; height: 7px; border-radius: 2px; background: var(--teal);
+  }
+  ul.notes li.caveat::before { background: var(--warm); }
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding: 34px 0 52px;
+    color: var(--muted);
+    font-size: 14px;
+    display: flex; flex-wrap: wrap; gap: 10px 26px; align-items: center; justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <a class="logo" href="#top" aria-label="PPTonPage home">
+      <svg viewBox="0 0 32 32" role="img" aria-label="PPTonPage logo" fill="none">
+        <rect x="1" y="1" width="30" height="30" rx="7" fill="currentColor"/>
+        <rect x="7" y="8.5" width="14.5" height="11.5" rx="1.6" fill="none" stroke="#FAF8F5" stroke-width="2"/>
+        <path d="M12.5 22.5h12.5" stroke="#2E8B8B" stroke-width="2.6" stroke-linecap="round"/>
+      </svg>
+      <b>PPTonPage<span>/viewer</span></b>
+    </a>
+    <nav class="header-links" aria-label="Sections">
+      <a href="#install">Install</a>
+      <a href="#api">API</a>
+      <a href="#flask">Flask</a>
+    </nav>
+  </header>
+</div>
+
+<main id="top">
+  <div class="wrap">
+    <div class="hero">
+      <p class="eyebrow">Drop-in web component</p>
+      <h1>Embed a <em>live</em> PowerPoint deck on any page.</h1>
+      <p class="lede">
+        Point the component at a <code>.pptx</code> URL and it renders inline — keeping the
+        click-by-click animations, slide transitions and hyperlinks the original file was
+        authored with. One script tag, no plugin, no server-side conversion.
+      </p>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="stage-block">
+      <div class="stage-frame">
+        <pptx-viewer id="deck" src="decks/animated-demo.pptx" autoplay="2.6" loop></pptx-viewer>
+      </div>
+      <p class="stage-hint">
+        <span>Playing itself &mdash; click or press <kbd>→</kbd> to take over</span>
+        <span><kbd>←</kbd> back</span>
+        <span><kbd>G</kbd> all slides</span>
+        <span><kbd>F</kbd> fullscreen</span>
+      </p>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <section id="install">
+      <h2>Two lines to install</h2>
+      <p class="section-intro">
+        The bundle registers a <code>&lt;pptx-viewer&gt;</code> custom element. It is
+        framework-agnostic and renders inside a shadow root, so nothing on your page can
+        leak in and break the slides.
+      </p>
+      <div class="code-pair">
+        <div>
+          <p class="code-label"><span>Any HTML page</span></p>
+<pre><code><span class="tok-com">&lt;!-- once, anywhere on the page --&gt;</span>
+<span class="tok-tag">&lt;script</span> <span class="tok-attr">src</span>=<span class="tok-str">"https://your-host/pptonpage/pptx-viewer.js"</span><span class="tok-tag">&gt;&lt;/script&gt;</span>
+
+<span class="tok-com">&lt;!-- then, as many decks as you like --&gt;</span>
+<span class="tok-tag">&lt;pptx-viewer</span>
+  <span class="tok-attr">src</span>=<span class="tok-str">"https://your-host/decks/quarterly.pptx"</span>
+  <span class="tok-attr">slide</span>=<span class="tok-str">"1"</span><span class="tok-tag">&gt;&lt;/pptx-viewer&gt;</span></code></pre>
+        </div>
+        <div>
+          <p class="code-label"><span>React / Vue / Svelte</span></p>
+<pre><code><span class="tok-com">// Custom elements work in every framework.</span>
+<span class="tok-com">// In React 19+ props map straight to attributes.</span>
+<span class="tok-kw">import</span> <span class="tok-str">'./pptx-viewer.js'</span>;
+
+<span class="tok-kw">export default function</span> <span class="tok-attr">Deck</span>({ url }) {
+  <span class="tok-kw">return</span> (
+    &lt;<span class="tok-tag">pptx-viewer</span>
+      <span class="tok-attr">src</span>={url}
+      <span class="tok-attr">theme</span>=<span class="tok-str">"light"</span>
+      <span class="tok-attr">onPptxSlidechange</span>={<span class="tok-attr">handleChange</span>}
+    /&gt;
+  );
+}</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>What carries over from the original file</h2>
+      <p class="section-intro">
+        The renderer draws each slide as real DOM — SVG geometry plus positioned text — so
+        individual shapes can be animated. The animation layer reads the deck's own
+        <code>p:timing</code> and <code>p:transition</code> XML rather than guessing.
+      </p>
+      <div class="grid">
+        <div class="cell">
+          <div class="cell-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h4l2.5-6 3 12 2.5-6h4"/></svg></div>
+          <h3>Entrance &amp; exit animations</h3>
+          <p>Fade, wipe, fly-in, zoom, spin, dissolve, blinds, checkerboard, wedge and more — replayed step by step, in the order the author set.</p>
+        </div>
+        <div class="cell">
+          <div class="cell-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="10" height="14" rx="1.6"/><path d="M16 9l4 3-4 3"/></svg></div>
+          <h3>Slide transitions</h3>
+          <p>Push, wipe, split, cover, cut, dissolve, comb, circle, diamond, wheel, zoom and fade — including reverse playback when you step backwards.</p>
+        </div>
+        <div class="cell">
+          <div class="cell-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13.5a4 4 0 0 0 5.7.3l2.6-2.6a4 4 0 0 0-5.7-5.7L11.4 6.7"/><path d="M14 10.5a4 4 0 0 0-5.7-.3l-2.6 2.6a4 4 0 0 0 5.7 5.7l1.2-1.2"/></svg></div>
+          <h3>Hyperlinks &amp; click actions</h3>
+          <p>Text links, shape click actions and "jump to slide" buttons stay live. Every navigation fires a cancelable event first.</p>
+        </div>
+        <div class="cell">
+          <div class="cell-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4H4v5M15 4h5v5M15 20h5v-5M9 20H4v-5"/></svg></div>
+          <h3>Navigation built in</h3>
+          <p>Click-to-advance, arrow and space keys, Home/End, a thumbnail grid, a progress bar and native fullscreen — all keyboard accessible.</p>
+        </div>
+        <div class="cell">
+          <div class="cell-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5m0 14h16"/><path d="M8 15l3.5-5 3 3L20 6"/></svg></div>
+          <h3>Charts, tables &amp; SmartArt</h3>
+          <p>Native charts render through ECharts; tables, gradients, custom geometry, preset shapes and SmartArt layouts are all drawn faithfully.</p>
+        </div>
+        <div class="cell">
+          <div class="cell-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="4"/></svg></div>
+          <h3>Responsive &amp; self-contained</h3>
+          <p>Scales to its container at the deck's true aspect ratio, honours <code>prefers-reduced-motion</code>, and styles cannot collide with your page.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="api">
+      <h2>Attributes, methods, events</h2>
+      <p class="section-intro">
+        Everything is optional except <code>src</code>. Attributes are reactive — change
+        <code>slide</code> and the viewer navigates.
+      </p>
+
+      <div class="table-scroll" style="margin-bottom:26px">
+        <table>
+          <caption>Attributes</caption>
+          <thead><tr><th scope="col">Attribute</th><th scope="col">Default</th><th scope="col">Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>src</code></td><td>—</td><td>URL of the <code>.pptx</code>. Cross-origin needs <code>Access-Control-Allow-Origin</code> on that host.</td></tr>
+            <tr><td><code>slide</code></td><td><code>1</code></td><td>One-based starting slide; set it later to navigate.</td></tr>
+            <tr><td><code>animations</code></td><td><code>on</code></td><td><code>off</code> skips effects and jumps to each step's end state.</td></tr>
+            <tr><td><code>controls</code></td><td><code>default</code></td><td><code>none</code> hides all chrome for a kiosk-style embed.</td></tr>
+            <tr><td><code>theme</code></td><td><code>auto</code></td><td><code>light</code> uses a lighter letterbox behind the slide.</td></tr>
+            <tr><td><code>click-advance</code></td><td><code>on</code></td><td><code>off</code> stops a body click from advancing the deck.</td></tr>
+            <tr><td><code>loop</code></td><td>off</td><td>Present: wraps from the last slide back to the first.</td></tr>
+            <tr><td><code>credentials</code></td><td><code>same-origin</code></td><td><code>include</code> sends cookies with the deck request.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-pair">
+        <div>
+          <p class="code-label"><span>Methods &amp; properties</span></p>
+<pre><code><span class="tok-kw">const</span> v = document.querySelector(<span class="tok-str">'pptx-viewer'</span>);
+
+v.next();                 <span class="tok-com">// next animation step, then next slide</span>
+v.previous();
+v.goToSlide(<span class="tok-str">4</span>);           <span class="tok-com">// zero-based</span>
+v.goToStep(<span class="tok-str">2</span>);            <span class="tok-com">// -1 = nothing revealed yet</span>
+v.toggleFullscreen();
+
+v.slideCount;  v.slideIndex;
+v.stepCount;   v.stepIndex;</code></pre>
+        </div>
+        <div>
+          <p class="code-label"><span>Events</span></p>
+<pre><code>v.addEventListener(<span class="tok-str">'pptx-load'</span>, e =&gt;
+  console.log(e.detail.slideCount));
+
+v.addEventListener(<span class="tok-str">'pptx-slidechange'</span>, e =&gt;
+  track(e.detail.slideNumber));
+
+<span class="tok-com">// cancelable — preventDefault() to handle</span>
+<span class="tok-com">// links yourself instead of opening a tab</span>
+v.addEventListener(<span class="tok-str">'pptx-link'</span>, e =&gt; {
+  e.preventDefault();
+  router.push(e.detail.url);
+});
+
+<span class="tok-com">// also: pptx-loadstart, pptx-step,</span>
+<span class="tok-com">// pptx-transition, pptx-navigate,</span>
+<span class="tok-com">// pptx-end, pptx-error</span></code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section id="flask">
+      <h2>Serving it from Flask</h2>
+      <p class="section-intro">
+        Rendering is entirely client-side, so the backend only serves two things: the
+        bundle and the deck. The included blueprint adds the CORS headers a cross-origin
+        embed needs, plus range requests, ETags and path-traversal protection.
+      </p>
+      <div class="code-pair">
+        <div>
+          <p class="code-label"><span>app.py</span></p>
+<pre><code><span class="tok-kw">from</span> flask <span class="tok-kw">import</span> Flask
+<span class="tok-kw">from</span> pptonpage <span class="tok-kw">import</span> pptonpage
+
+app = Flask(__name__)
+
+app.register_blueprint(
+    pptonpage(
+        decks_dir=<span class="tok-str">"/srv/decks"</span>,
+        <span class="tok-com"># or ["https://intranet.example.com"]</span>
+        allowed_origins=<span class="tok-str">"*"</span>,
+    ),
+    url_prefix=<span class="tok-str">"/pptonpage"</span>,
+)</code></pre>
+        </div>
+        <div>
+          <p class="code-label"><span>Routes it adds</span></p>
+<pre><code>GET /pptonpage/pptx-viewer.js
+GET /pptonpage/decks/&lt;name&gt;.pptx
+GET /pptonpage/decks/            <span class="tok-com"># JSON index</span>
+
+<span class="tok-com"># Already serving decks yourself? You only</span>
+<span class="tok-com"># need this header on the .pptx response:</span>
+Access-Control-Allow-Origin: *</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Worth knowing</h2>
+      <ul class="notes">
+        <li>Effects are driven by the deck's actual animation behaviours, not a preset-ID lookup table, so an unrecognised effect degrades to a clean fade instead of vanishing.</li>
+        <li>Slides are rendered lazily with a small cache window, and the next slide is prefetched while the browser is idle.</li>
+        <li>Animation groups that PowerPoint marks "start after previous" replay automatically; groups set to "on click" wait for you.</li>
+        <li>A slide set to advance automatically after a set time honours that timing.</li>
+        <li class="caveat">Embedded video and audio are rendered as static shapes — playback is not wired up in this version.</li>
+        <li class="caveat">Effects with no CSS equivalent (3-D rotations, some morph transitions) fall back to a cross-fade.</li>
+        <li class="caveat">The deck host must send CORS headers, otherwise the browser refuses to hand the bytes to the component.</li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="wrap">
+    <footer>
+      <span>PPTonPage — client-side PPTX rendering. Slides never leave the browser.</span>
+      <span>Rendering by <a href="https://github.com/aiden0z/pptx-renderer">@aiden0z/pptx-renderer</a> (Apache-2.0)</span>
+    </footer>
+  </div>
+</main>
+
+<script src="pptx-viewer.js"></script>
+<script>
+  // Keep the URL hash in step with the deck so a link can deep-link a slide.
+  const deck = document.getElementById('deck');
+  deck.addEventListener('pptx-slidechange', (e) => {
+    history.replaceState(null, '', '#slide-' + e.detail.slideNumber);
+  });
+  const m = /^#slide-(\d+)$/.exec(location.hash);
+  if (m) deck.setAttribute('slide', m[1]);
+</script>
+<script data-pplx-inline-edit>
+(function () {
+  if (window === window.top) return;
+
+  const allowedParentOrigins = ["https://www.perplexity.ai","https://perplexity.ai","https://testing.perplexity.ai","https://staging.perplexity.ai","https://*.preview.i.perplexity.ai","http://perplexity.localhost","http://localhost:1420","http://127.0.0.1:1420","http://localhost:3000","http://127.0.0.1:3000","http://localhost:5173","http://127.0.0.1:5173"];
+  const MAX_FONT_BYTES = 500 * 1024;
+  const MAX_TOTAL_FONT_BYTES = 2 * 1024 * 1024;
+  let scrollForwarding = false;
+  let scrollRaf = 0;
+  let trustedTopOrigin = null;
+
+  // Allow entries like "https://*.preview.i.perplexity.ai" — the wildcard
+  // matches a single DNS label (no dots), so "https://*.foo" cannot stretch
+  // across multiple labels.
+  function matchesAllowedOrigin(origin) {
+    if (!origin) return false;
+    for (const entry of allowedParentOrigins) {
+      if (!entry.includes("*")) {
+        if (entry === origin) return true;
+        continue;
+      }
+      const pattern = new RegExp(
+        "^" +
+          entry.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^.]+") +
+          "$",
+      );
+      if (pattern.test(origin)) return true;
+    }
+    return false;
+  }
+
+  // Trust decision: when the sender is same-origin-visible (event.origin is a
+  // real origin like https://www.perplexity.ai) we trust event.origin directly.
+  // When event.origin is "null" (opaque broker srcdoc), we fall back to the
+  // broker's stamped `parentOrigin` to identify the top window. The fallback
+  // is claim-only — we rely on the browser's native `targetOrigin` enforcement
+  // on the response path (see postToTrustedTop) to ensure replies can't be
+  // delivered to anyone but the actual top window of that claimed origin.
+  function getTrustedParentOrigin(event) {
+    const forwardedParentOrigin =
+      typeof event.data.parentOrigin === "string" ? event.data.parentOrigin : null;
+    const parentOrigin = event.origin === "null" ? forwardedParentOrigin : event.origin;
+    return matchesAllowedOrigin(parentOrigin) ? parentOrigin : null;
+  }
+
+  // All responses go to window.top with targetOrigin = the allowlisted origin.
+  // An attacker that iframes us inside their own null-origin broker can claim
+  // any parentOrigin they like, but the browser will drop the reply whenever
+  // the real top's origin doesn't match — so the screenshot never leaves.
+  function postToTrustedTop(message) {
+    if (!trustedTopOrigin) return;
+    try {
+      window.top.postMessage(message, trustedTopOrigin);
+    } catch (_error) {}
+  }
+
+  function inlineAll(original, clone) {
+    if (original.nodeType !== 1 || clone.nodeType !== 1) return;
+
+    try {
+      const computedStyle = getComputedStyle(original);
+      // cssText on a computed style is the serialized declaration in modern
+      // Chromium/Safari — a single read beats enumerating ~400 longhand
+      // properties. Firefox returns "" here, so we fall back on empty.
+      const serialized = computedStyle.cssText;
+      if (serialized) {
+        clone.style.cssText = serialized;
+      } else {
+        const parts = new Array(computedStyle.length);
+        for (let index = 0; index < computedStyle.length; index += 1) {
+          const property = computedStyle[index];
+          parts[index] = `${property}:${computedStyle.getPropertyValue(property)};`;
+        }
+        clone.style.cssText = parts.join("");
+      }
+    } catch (_error) {}
+
+    const originalChildren = original.children;
+    const clonedChildren = clone.children;
+    for (
+      let index = 0;
+      index < originalChildren.length && index < clonedChildren.length;
+      index += 1
+    ) {
+      inlineAll(originalChildren[index], clonedChildren[index]);
+    }
+  }
+
+  function extractFontUrl(srcValue) {
+    const matches = [
+      ...srcValue.matchAll(
+        /url\(["']?([^"')]+)["']?\)(?:\s*format\(["']?([^"')]+)["']?\))?/gi,
+      ),
+    ];
+    if (matches.length === 0) return null;
+    const woff2 = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff2"));
+    if (woff2) return woff2[1];
+    const woff = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff"));
+    if (woff) return woff[1];
+    return matches[0][1];
+  }
+
+  // Cache resolved font URL -> data URI across captures. Fonts on a page
+  // essentially never change, and a batch run emits multiple captures back to
+  // back — without this we'd refetch + re-base64 every time.
+  const fontDataUriCache = new Map();
+  const SRC_DECLARATION_RE = /src\s*:\s*[^;}]+/i;
+
+  async function fetchAsDataUri(url) {
+    if (fontDataUriCache.has(url)) return fontDataUriCache.get(url);
+    let dataUri = null;
+    try {
+      const response = await fetch(url, { mode: "cors", credentials: "omit" });
+      if (response.ok) {
+        const blob = await response.blob();
+        if (blob.size <= MAX_FONT_BYTES) {
+          dataUri = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () =>
+              resolve(typeof reader.result === "string" ? reader.result : null);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(blob);
+          });
+        }
+      }
+    } catch (_error) {
+      dataUri = null;
+    }
+    fontDataUriCache.set(url, dataUri);
+    return dataUri;
+  }
+
+  function collectFontFaceRuleTexts() {
+    const rules = [];
+    for (const sheet of document.styleSheets) {
+      let cssRules;
+      try {
+        cssRules = sheet.cssRules;
+      } catch (_error) {
+        continue;
+      }
+      if (!cssRules) continue;
+      for (const rule of cssRules) {
+        const cssText = rule.cssText || "";
+        if (cssText.startsWith("@font-face")) rules.push(cssText);
+      }
+    }
+    return rules;
+  }
+
+  async function buildInlinedFontCss() {
+    const ruleTexts = collectFontFaceRuleTexts();
+    if (ruleTexts.length === 0) return null;
+
+    const resolved = ruleTexts.map((cssText) => {
+      if (!SRC_DECLARATION_RE.test(cssText)) return null;
+      const srcMatch = cssText.match(/src\s*:\s*([^;}]+)[;}]/i);
+      if (!srcMatch) return null;
+      const url = extractFontUrl(srcMatch[1]);
+      if (!url) return null;
+      try {
+        return { cssText, url: new URL(url, document.baseURI).href };
+      } catch (_error) {
+        return null;
+      }
+    });
+
+    const dataUris = await Promise.all(
+      resolved.map((entry) => (entry ? fetchAsDataUri(entry.url) : Promise.resolve(null))),
+    );
+
+    const inlined = [];
+    let totalBytes = 0;
+    for (let index = 0; index < resolved.length; index += 1) {
+      const entry = resolved[index];
+      const dataUri = dataUris[index];
+      if (!entry || !dataUri) continue;
+      const approxBytes = dataUri.length * 0.75;
+      if (totalBytes + approxBytes > MAX_TOTAL_FONT_BYTES) break;
+      totalBytes += approxBytes;
+      inlined.push(entry.cssText.replace(SRC_DECLARATION_RE, `src: url("${dataUri}")`));
+    }
+    return inlined.length > 0 ? inlined.join("\n") : null;
+  }
+
+  function stripExternal(clone) {
+    const images = clone.querySelectorAll("img");
+    for (let index = 0; index < images.length; index += 1) {
+      const src = images[index].getAttribute("src");
+      if (src && !src.startsWith("data:")) images[index].removeAttribute("src");
+    }
+
+    const elements = clone.querySelectorAll("*");
+    for (let index = 0; index < elements.length; index += 1) {
+      const style = elements[index].style.cssText;
+      if (style && style.includes("url(")) {
+        elements[index].style.cssText = style.replace(
+          /url\(["']?(?!data:)[^)"']*["']?\)/gi,
+          "none",
+        );
+      }
+    }
+  }
+
+  function emitScroll() {
+    scrollRaf = 0;
+    if (!scrollForwarding) return;
+    postToTrustedTop({
+      type: "INLINE_EDIT_SCROLL",
+      scrollX: window.scrollX,
+      scrollY: window.scrollY,
+    });
+  }
+
+  window.addEventListener(
+    "scroll",
+    function () {
+      if (!scrollForwarding || scrollRaf) return;
+      scrollRaf = requestAnimationFrame(emitScroll);
+    },
+    { passive: true, capture: true },
+  );
+
+  async function handleCaptureRequest(event) {
+    const requestId = event.data.requestId;
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    function postResult(dataUrl) {
+      postToTrustedTop({
+        type: "INLINE_EDIT_SCREENSHOT_RESULT",
+        requestId,
+        dataUrl,
+        scrollX,
+        scrollY,
+      });
+    }
+
+    try {
+      // Wait for any pending web fonts to resolve so both inline metrics and
+      // the @font-face inlining below see the same loaded faces.
+      if (document.fonts && document.fonts.ready) {
+        try {
+          await document.fonts.ready;
+        } catch (_error) {}
+      }
+
+      const clone = document.documentElement.cloneNode(true);
+      inlineAll(document.documentElement, clone);
+
+      const removedNodes = clone.querySelectorAll("script,link[rel=\"stylesheet\"],style");
+      for (let index = 0; index < removedNodes.length; index += 1) {
+        removedNodes[index].remove();
+      }
+
+      stripExternal(clone);
+
+      // Re-embed web fonts as data-URI @font-face rules so the SVG rasterizer
+      // can resolve them — external font URLs aren't fetched during
+      // foreignObject rendering, which would otherwise force a fallback face
+      // and change text metrics.
+      const inlinedFontCss = await buildInlinedFontCss();
+      if (inlinedFontCss) {
+        const styleEl = document.createElement("style");
+        styleEl.textContent = inlinedFontCss;
+        const head = clone.querySelector("head");
+        if (head) head.appendChild(styleEl);
+        else clone.insertBefore(styleEl, clone.firstChild);
+      }
+
+      const html = new XMLSerializer().serializeToString(clone);
+      const svg =
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">` +
+        '<foreignObject width="100%" height="100%">' +
+        `<div xmlns="http://www.w3.org/1999/xhtml" style="width:${width}px;height:${height}px;overflow:hidden">` +
+        `<div style="position:relative;left:-${scrollX}px;top:-${scrollY}px">` +
+        html +
+        "</div></div></foreignObject></svg>";
+      const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+      const image = new Image();
+      image.onload = function () {
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(image, 0, 0);
+        postResult(canvas.toDataURL("image/png"));
+      };
+      image.onerror = function () {
+        postResult(null);
+      };
+      image.src = svgUrl;
+    } catch (_error) {
+      postResult(null);
+    }
+  }
+
+  window.addEventListener("message", function (event) {
+    if (!event.data) return;
+    // Only accept messages from the direct parent frame. Blocks sibling /
+    // unrelated-window postMessage senders that could otherwise reach us.
+    if (event.source !== window.parent) return;
+
+    const trustedParentOrigin = getTrustedParentOrigin(event);
+    if (!trustedParentOrigin) return;
+    trustedTopOrigin = trustedParentOrigin;
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_START") {
+      scrollForwarding = true;
+      emitScroll();
+      return;
+    }
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_STOP") {
+      scrollForwarding = false;
+      if (scrollRaf) cancelAnimationFrame(scrollRaf);
+      scrollRaf = 0;
+      return;
+    }
+
+    if (event.data.type !== "INLINE_EDIT_CAPTURE_REQUEST") return;
+
+    handleCaptureRequest(event);
+  });
+})();
+
+
+</script></body>
+</html>

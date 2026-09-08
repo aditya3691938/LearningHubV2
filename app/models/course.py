@@ -62,6 +62,7 @@ class CourseAssessment(db.Model):
     option2 = db.Column(db.String(255), nullable=False)
     option3 = db.Column(db.String(255), nullable=False)
     option4 = db.Column(db.String(255), nullable=False)
+    option5 = db.Column(db.String(255), nullable=True)
     correct_option = db.Column(db.String(50), nullable=False)
     lesson_number = db.Column(db.Integer, nullable=True, default=1)
 

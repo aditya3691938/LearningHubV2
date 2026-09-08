@@ -1,4 +1,4 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
 {% block title %}Assessment Result — {{ course.name }}{% endblock %}
 {% block public_content %}
 <div class="row justify-content-center">
@@ -35,7 +35,7 @@
     {% for q in questions %}
     {% set q_key = 'q_' ~ q.id %}
     {% set user_ans = user_answers.get(q_key, '') %}
-    {% set opts = [q.option1, q.option2, q.option3, q.option4] | select | list %}
+    {% set opts = [q.option1, q.option2, q.option3, q.option4, q.option5] | select | list %}
     {% set is_correct = (user_ans == q.correct_option) %}
     <div class="card border-0 shadow-sm mb-3 p-3 border-start border-3 {% if is_correct %}border-success{% else %}border-danger{% endif %}">
       <div class="d-flex align-items-start gap-3">

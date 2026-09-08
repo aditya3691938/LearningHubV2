@@ -15,7 +15,7 @@ class LiveClass(db.Model):
     # In Person fields
     location = db.Column(db.String(100), nullable=True) # e.g. HYD
     branch = db.Column(db.String(100), nullable=True)   # e.g. KPHB
-    session_time = db.Column(db.String(20), nullable=True, default='Morning') # 'Morning', 'Evening'
+    session_time = db.Column(db.String(50), nullable=True, default='Morning') # 'Morning', 'Evening'
     
     # Online fields
     meet_link = db.Column(db.String(255), nullable=True)

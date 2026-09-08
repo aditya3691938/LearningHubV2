@@ -98,12 +98,42 @@
                         <td data-label="Registered Date" class="text-muted">{{ l.created_at.strftime('%d-%b-%Y') }}</td>
                         <td data-label="Actions" class="text-end">
                             <!-- View Profile button removed, name is hyperlinked -->
-                            <form action="{{ url_for('learners.reset_learner_attempts', learner_id=l.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Reset assessment attempts to 0 for learner {{ l.global_id }}?');">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="btn-action-edit" title="Reset Assessment Attempts">
-                                    <i class="fa-solid fa-rotate-left me-1"></i> Reset Attempts
-                                </button>
-                            </form>
+                            <button type="button" class="btn-action-edit" title="Reset Assessment Attempts" data-bs-toggle="modal" data-bs-target="#resetModal{{ l.id }}">
+                                <i class="fa-solid fa-rotate-left me-1"></i> Reset Attempts
+                            </button>
+
+                            <!-- Reset Modal -->
+                            <div class="modal fade text-start" id="resetModal{{ l.id }}" tabindex="-1" aria-labelledby="resetModalLabel{{ l.id }}" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content border-0 shadow">
+                                        <div class="modal-header bg-warning">
+                                            <h5 class="modal-title text-dark fw-bold" id="resetModalLabel{{ l.id }}"><i class="fa-solid fa-rotate-left me-2"></i>Reset Attempts for {{ l.name }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <form action="{{ url_for('learners.reset_learner_attempts', learner_id=l.id) }}" method="POST">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <div class="modal-body">
+                                                <p class="mb-3 text-dark">Select the course to reset assessment attempts for learner <strong>{{ l.global_id }}</strong>:</p>
+                                                {% if l.enrollments %}
+                                                    <select class="form-select select2-course" name="course_id" required>
+                                                        <option value="">-- Search and Select Course --</option>
+                                                        {% for en in l.enrollments %}
+                                                            <option value="{{ en.course_id }}">{{ en.course.name }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                    <div class="form-text mt-2">This will reset their attempts to 0 and allow them to retake the Course End Assessment.</div>
+                                                {% else %}
+                                                    <div class="alert alert-warning mb-0 text-dark">This learner is not enrolled in any courses.</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="modal-footer border-top-0 bg-light">
+                                                <button type="button" class="btn btn-secondary fw-semibold" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-warning fw-bold shadow-sm" {% if not l.enrollments %}disabled{% endif %}>Reset Attempts</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
                         </td>
                     </tr>
                     {% else %}
@@ -141,4 +171,46 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Select2 CSS & JS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<style>
+    /* Fix Select2 styling inside modal */
+    .select2-container .select2-selection--single {
+        height: 38px !important;
+        border: 1px solid #dee2e6 !important;
+        border-radius: 0.375rem !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 36px !important;
+        color: #212529 !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px !important;
+    }
+    /* Ensure dropdown is visible above modal */
+    .select2-container--open {
+        z-index: 9999999 !important;
+    }
+    .select2-dropdown {
+        border-color: #dee2e6 !important;
+        border-radius: 0.375rem !important;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+</style>
+<script>
+    $(document).ready(function() {
+        // Initialize Select2 when a modal is shown to ensure correct width and attachment
+        $('.modal').on('shown.bs.modal', function () {
+            $(this).find('.select2-course').select2({
+                placeholder: "-- Search and Select Course --",
+                allowClear: true,
+                dropdownParent: $(this).find('.modal-content'),
+                width: '100%'
+            });
+        });
+    });
+</script>
 {% endblock %}

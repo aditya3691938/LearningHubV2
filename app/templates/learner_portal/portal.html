@@ -540,24 +540,28 @@
 
             <div class="notification-list" style="max-height: 280px; overflow-y: auto;">
                 {% for n in notifications %}
-                <div class="p-2.5 mb-2 rounded-3 border {% if not n.is_read %}bg-light border-teal-subtle{% else %}bg-white{% endif %} text-xs" id="notif-{{ n.id }}">
+                <div class="p-2.5 mb-2 rounded-3 border {% if not n.is_read %}bg-light border-teal-subtle{% else %}bg-white{% endif %} text-xs" id="notif-{{ n.id }}" style="cursor: pointer; transition: background-color 0.2s;" data-bs-toggle="modal" data-bs-target="#globalNotificationImageModal" onclick="markSingleNotificationRead({{ n.id }}, this); showGlobalNotificationImage('{% if n.image_path %}{{ url_for('static', filename=n.image_path) }}{% endif %}', `{{ n.title|escape }}`, `{{ n.message|escape }}`)">
                     <div class="d-flex align-items-start gap-2">
-                        {% if n.notification_type == 'COURSE_ASSIGNED' %}
-                        <i class="fa-solid fa-graduation-cap text-teal fa-lg mt-1"></i>
-                        {% elif n.notification_type == 'LESSON_UPDATED' %}
-                        <i class="fa-solid fa-book-open text-primary fa-lg mt-1"></i>
-                        {% elif n.notification_type == 'ASSESSMENT_UNLOCKED' %}
-                        <i class="fa-solid fa-award text-warning fa-lg mt-1"></i>
+                        {% if n.image_path %}
+                        <img src="{{ url_for('static', filename=n.image_path) }}" alt="Notification Media" class="rounded mt-1 shadow-sm border border-secondary" style="width: 44px; height: 44px; object-fit: cover;">
                         {% else %}
-                        <i class="fa-solid fa-bell text-info fa-lg mt-1"></i>
+                            {% if n.notification_type == 'COURSE_ASSIGNED' %}
+                            <i class="fa-solid fa-graduation-cap text-teal fa-2x mt-1"></i>
+                            {% elif n.notification_type == 'LESSON_UPDATED' %}
+                            <i class="fa-solid fa-book-open text-primary fa-2x mt-1"></i>
+                            {% elif n.notification_type == 'ASSESSMENT_UNLOCKED' %}
+                            <i class="fa-solid fa-award text-warning fa-2x mt-1"></i>
+                            {% else %}
+                            <i class="fa-solid fa-bell text-info fa-2x mt-1"></i>
+                            {% endif %}
                         {% endif %}
                         <div class="flex-grow-1">
                             <strong class="d-block text-dark mb-0.5">{{ n.title }}</strong>
                             <p class="text-muted mb-1 text-xs lh-sm">{{ n.message }}</p>
-                            <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex justify-content-between align-items-center mt-1">
                                 <span class="text-muted text-xxs">{{ n.created_at.strftime('%d-%b %H:%M') }}</span>
                                 {% if n.course %}
-                                <a href="{{ url_for('learners.self_paced_flow', course_id_str=n.course.course_id) }}" class="btn btn-teal text-white py-0 px-2 fw-bold text-xxs">View Course</a>
+                                <a href="{{ url_for('learners.self_paced_flow', course_id_str=n.course.course_id) }}" class="btn btn-teal text-white py-0 px-2 fw-bold text-xxs" onclick="event.stopPropagation();">View Course</a>
                                 {% endif %}
                             </div>
                         </div>
@@ -661,6 +665,26 @@
         </div>
     </div>
 </div>
+
+<!-- Notification Image Modal -->
+<div class="modal fade" id="notificationImageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-teal text-white py-3 px-4">
+                <h6 class="modal-title fw-bold" id="notificationModalTitle">
+                    Notification Media
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0 text-center bg-light">
+                <img id="notificationModalImg" src="" alt="Full Notification Media" class="img-fluid w-100" style="max-height: 70vh; object-fit: contain;">
+                <div class="p-3 text-start bg-white border-top">
+                    <p class="mb-0 text-dark fw-semibold" id="notificationModalMessage"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -675,6 +699,12 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 });
+
+function showNotificationImage(imgUrl, title, message) {
+    document.getElementById('notificationModalImg').src = imgUrl;
+    document.getElementById('notificationModalTitle').textContent = title;
+    document.getElementById('notificationModalMessage').textContent = message;
+}
 
 function openRecommendModal(courseId, courseName) {
     document.getElementById('recommend_course_id').value = courseId;

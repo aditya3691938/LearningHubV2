@@ -466,51 +466,7 @@ def guide():
     return render_template('super_admin/guide.html')
 
 
-@super_admin_bp.route('/issues')
-@admin_required
-def list_issues():
-    from app.models.issue import LmsIssue
-    issues = LmsIssue.query.order_by(LmsIssue.created_at.desc()).all()
-    return render_template('super_admin/issues.html', issues=issues)
 
-
-@super_admin_bp.route('/issues/resolve/<int:issue_id>', methods=['POST'])
-@admin_required
-def resolve_issue(issue_id):
-    from app.models.issue import LmsIssue
-    from app.models.notification import LearnerNotification
-    from datetime import datetime, timedelta
-    
-    issue = LmsIssue.query.get_or_404(issue_id)
-    issue.status = 'Resolved'
-    issue.resolved_at = datetime.utcnow()
-    
-    # Auto-grant extension if it's a manager fallback escalation ticket
-    extension_msg = ""
-    if issue.description and '[Escalation] Extension requested for course' in issue.description:
-        import re
-        match = re.search(r'Enrollment ID:\s*(\d+)', issue.description)
-        if match:
-            enrollment_id = int(match.group(1))
-            from app.models.enrollment import LearnerEnrollment
-            enrollment = LearnerEnrollment.query.get(enrollment_id)
-            if enrollment:
-                enrollment.extended_deadline = datetime.utcnow() + timedelta(days=30)
-                enrollment.extension_requested = False
-                extension_msg = f" Also granted a 30-day course extension for '{enrollment.course.name}'."
-    
-    # Notify learner
-    notif = LearnerNotification(
-        learner_id=issue.learner_id,
-        title="Support Issue Resolved! ✅",
-        message=f"Your support ticket #{issue.id} regarding '{issue.category}' has been marked as resolved by the Administrator.{extension_msg} Let us know if you need anything else!",
-        notification_type='SYSTEM_UPDATE'
-    )
-    db.session.add(notif)
-    db.session.commit()
-    
-    flash(f"Support issue #{issue.id} marked as resolved, and learner notified.{extension_msg}", "success")
-    return redirect(url_for('super_admin.list_issues'))
 
 
 @super_admin_bp.route('/broadcast_notification', methods=['POST'])
@@ -527,22 +483,52 @@ def broadcast_notification():
         flash("Title and Message are required.", "danger")
         return redirect(url_for('dashboard.index'))
         
+    image_path = None
+    image_file = request.files.get('image')
+    if image_file and image_file.filename:
+        from werkzeug.utils import secure_filename
+        import uuid
+        import os
+        from flask import current_app
+        filename = secure_filename(image_file.filename)
+        unique_filename = f"{uuid.uuid4().hex}_{filename}"
+        upload_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'notifications')
+        os.makedirs(upload_dir, exist_ok=True)
+        file_path = os.path.join(upload_dir, unique_filename)
+        image_file.save(file_path)
+        image_path = f"uploads/notifications/{unique_filename}"
+
     if audience == 'specific':
-        gid = request.form.get('global_id', '').strip()
-        learner = Learner.query.filter_by(global_id=gid).first()
-        if not learner:
-            flash(f"Learner with Global ID '{gid}' not found.", "danger")
-            return redirect(url_for('dashboard.index'))
+        raw_gids = request.form.get('global_id', '')
+        gids = [g.strip() for g in raw_gids.replace('\r', '\n').split('\n') if g.strip()]
         
-        notif = LearnerNotification(
-            learner_id=learner.id,
-            title=title,
-            message=message,
-            notification_type='SYSTEM_UPDATE'
-        )
-        db.session.add(notif)
+        if not gids:
+            flash("Please provide at least one Global ID.", "danger")
+            return redirect(url_for('dashboard.index'))
+            
+        success_count = 0
+        not_found = []
+        for gid in gids:
+            learner = Learner.query.filter_by(global_id=gid).first()
+            if not learner:
+                not_found.append(gid)
+                continue
+            
+            notif = LearnerNotification(
+                learner_id=learner.id,
+                title=title,
+                message=message,
+                notification_type='SYSTEM_UPDATE',
+                image_path=image_path
+            )
+            db.session.add(notif)
+            success_count += 1
+            
         db.session.commit()
-        flash(f"Notification sent to learner {learner.name} successfully.", "success")
+        if success_count > 0:
+            flash(f"Notification sent to {success_count} learner(s) successfully.", "success")
+        if not_found:
+            flash(f"Could not find learners for the following Global IDs: {', '.join(not_found)}", "warning")
     else:
         # Broadcast to all learners
         learners = Learner.query.all()
@@ -551,7 +537,8 @@ def broadcast_notification():
                 learner_id=learner.id,
                 title=title,
                 message=message,
-                notification_type='SYSTEM_UPDATE'
+                notification_type='SYSTEM_UPDATE',
+                image_path=image_path
             )
             db.session.add(notif)
         db.session.commit()

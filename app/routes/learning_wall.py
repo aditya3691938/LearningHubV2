@@ -260,7 +260,7 @@ def create_moment():
     
     if learner_id:
         from app.utils.gamification import award_points
-        award_points(learner_id, 20, "Sharing a learning moment")
+        award_points(learner_id, 10, "Sharing a learning moment")
         
     db.session.commit()
     

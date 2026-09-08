@@ -92,11 +92,11 @@ def upload_external():
     
     learner = Learner.query.get(learner_id)
     if learner:
-        learner.points += 50
+        learner.points += 100
         
     db.session.commit()
     
-    flash("External certification uploaded successfully! Earned 50 points & updated skill repository.", "success")
+    flash("External certification uploaded successfully! Earned 100 points & updated skill repository.", "success")
     return redirect(url_for('certificates.my_certificates'))
 
 @certificates_bp.route('/download/<cert_id_str>')

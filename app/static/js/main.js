@@ -19,6 +19,11 @@ document.addEventListener('DOMContentLoaded', function () {
     // Sync Theme Toggle UI
     updateThemeToggleUI();
 
+    // Move all modals to body to prevent z-index and backdrop click issues
+    document.querySelectorAll('.modal').forEach(modal => {
+        document.body.appendChild(modal);
+    });
+
     // Attach click listeners to theme toggle buttons
     const themeButtons = document.querySelectorAll('.theme-toggle-btn');
     themeButtons.forEach(btn => {

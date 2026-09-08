@@ -25,6 +25,7 @@ class Learner(db.Model):
     global_id = db.Column(db.String(50), unique=True, nullable=False, index=True)
     name = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(120), nullable=True)
+    profile_picture = db.Column(db.String(255), nullable=True)
     department = db.Column(db.String(100), nullable=True, default='L&D')
     date_of_birth = db.Column(db.Date, nullable=True)
     designation = db.Column(db.String(120), nullable=True)

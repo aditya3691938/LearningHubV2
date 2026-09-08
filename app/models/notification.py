@@ -14,6 +14,7 @@ class LearnerNotification(db.Model):
     notification_type = db.Column(db.String(50), nullable=False, default='COURSE_ASSIGNED') # 'COURSE_ASSIGNED', 'LESSON_UPDATED', 'ASSESSMENT_UNLOCKED'
     is_read = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    image_path = db.Column(db.String(255), nullable=True)
 
     learner = db.relationship('Learner', backref=db.backref('notifications', lazy=True, cascade='all, delete-orphan'))
     course = db.relationship('Course', backref=db.backref('notifications', lazy=True, cascade='all, delete-orphan'))

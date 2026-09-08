@@ -215,7 +215,7 @@
         <!-- Broadcast Notifications Card -->
         <div class="card border-0 shadow-sm p-3 mt-4">
             <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-bullhorn text-teal me-2"></i> Broadcast Alerts & Notifications</h5>
-            <form action="{{ url_for('super_admin.broadcast_notification') }}" method="POST">
+            <form action="{{ url_for('super_admin.broadcast_notification') }}" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="mb-3">
                     <label class="form-label text-xs fw-bold text-uppercase text-muted">Target Audience</label>
@@ -225,8 +225,12 @@
                     </select>
                 </div>
                 <div class="mb-3 d-none" id="specificGidField">
-                    <label class="form-label text-xs fw-bold text-uppercase text-muted">Global ID</label>
-                    <input type="text" class="form-control rounded-3 text-xs" name="global_id" placeholder="E.g., 10001">
+                    <label class="form-label text-xs fw-bold text-uppercase text-muted">Global IDs (one per line)</label>
+                    <textarea class="form-control rounded-3 text-xs" name="global_id" rows="3" placeholder="E.g., 10001&#10;10002&#10;10003"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-xs fw-bold text-uppercase text-muted">Attach Media / Image (Optional)</label>
+                    <input type="file" class="form-control rounded-3 text-xs" name="image" accept="image/*">
                 </div>
                 <div class="mb-3">
                     <label class="form-label text-xs fw-bold text-uppercase text-muted">Notification Title</label>

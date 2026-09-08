@@ -46,6 +46,14 @@
                         {{ q.option4 }}
                     </label>
                 </div>
+                {% if q.option5 %}
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="radio" name="{{ q.id }}" id="q_{{ q.id }}_opt5" value="Option5" required>
+                    <label class="form-check-label" for="q_{{ q.id }}_opt5">
+                        {{ q.option5 }}
+                    </label>
+                </div>
+                {% endif %}
             </div>
         </div>
         {% else %}

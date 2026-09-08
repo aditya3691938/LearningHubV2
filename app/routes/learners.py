@@ -45,11 +45,17 @@ def list_learners():
 @admin_required
 def reset_learner_attempts(learner_id):
     """
-    Admin Route: Reset assessment attempts for a learner so they can retake the Course End Assessment.
+    Admin Route: Reset assessment attempts for a learner for a specific course so they can retake the Course End Assessment.
     """
 
     learner = Learner.query.get_or_404(learner_id)
-    enrollments = LearnerEnrollment.query.filter_by(learner_id=learner.id).all()
+    course_id = request.form.get('course_id')
+    
+    if not course_id:
+        flash("Please select a course to reset attempts for.", "danger")
+        return redirect(request.referrer or url_for('learners.list_learners'))
+        
+    enrollments = LearnerEnrollment.query.filter_by(learner_id=learner.id, course_id=course_id).all()
     for en in enrollments:
         en.attempts_count = 0
         en.completion_status = 'Enrolled'
@@ -58,8 +64,8 @@ def reset_learner_attempts(learner_id):
         AssessmentAttempt.query.filter_by(enrollment_id=en.id).delete()
 
     db.session.commit()
-    flash(f"Assessment attempts reset to 0 for Learner '{learner.global_id} - {learner.name}'. They can take the Course End Assessment again!", "success")
-    return redirect(url_for('learners.list_learners'))
+    flash(f'Assessment attempts successfully reset for {learner.global_id} on the selected course.', 'success')
+    return redirect(request.referrer or url_for('learners.list_learners'))
 
 
 @learners_bp.route('/<int:learner_id>/detail')
@@ -1089,6 +1095,10 @@ def submit_feedback(repo_id):
                         pdf_filename=cert_filename
                     )
                     db.session.add(cert)
+                    
+                    from app.utils.gamification import award_points
+                    award_points(learner_id, 100, "Earning a Course Certificate")
+                    
                     flash("Thank you! Feedback recorded. Your course is marked as COMPLETED and Certificate generated!", "success")
                 else:
                     flash("Thank you! Feedback recorded. Your course is marked as COMPLETED!", "success")
@@ -1450,7 +1460,7 @@ def catalog():
     )
 
 
-@learners_bp.route('/profile')
+@learners_bp.route('/profile', methods=['GET', 'POST'])
 def view_learner_profile():
     learner_id = session.get('learner_id')
     if not learner_id:
@@ -1458,6 +1468,42 @@ def view_learner_profile():
         return redirect(url_for('auth.learner_login'))
         
     learner = Learner.query.get_or_404(learner_id)
+    
+    if request.method == 'POST':
+        dob_str = request.form.get('date_of_birth')
+        profile_pic = request.files.get('profile_picture')
+        
+        updated = False
+        
+        if dob_str:
+            try:
+                learner.date_of_birth = datetime.strptime(dob_str, '%Y-%m-%d').date()
+                updated = True
+                # Check if it's their birthday today to trigger the post
+                from app.services.learning_wall_service import check_and_generate_birthday_posts
+                check_and_generate_birthday_posts()
+            except ValueError:
+                flash("Invalid Date Format. Please try again.", "danger")
+                
+        if profile_pic and profile_pic.filename:
+            from werkzeug.utils import secure_filename
+            import uuid
+            import os
+            from flask import current_app
+            
+            ext = os.path.splitext(profile_pic.filename)[1]
+            pic_filename = f"profile_{learner.id}_{uuid.uuid4().hex[:8]}{ext}"
+            upload_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'profiles')
+            os.makedirs(upload_dir, exist_ok=True)
+            profile_pic.save(os.path.join(upload_dir, pic_filename))
+            learner.profile_picture = pic_filename
+            updated = True
+
+        if updated:
+            db.session.commit()
+            flash("Your profile has been updated!", "success")
+            
+        return redirect(url_for('learners.view_learner_profile'))
     
     # Get active/completed enrollments count
     total_enrollments = LearnerEnrollment.query.filter_by(learner_id=learner.id).count()

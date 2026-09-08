@@ -17,8 +17,17 @@
         <div class="col-lg-4">
             <div class="card border-0 shadow-sm text-center p-4">
                 <div class="position-relative d-inline-block mx-auto mb-3">
-                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200" alt="Profile" class="rounded-circle border border-2 border-teal shadow" style="width: 120px; height: 120px; object-fit: cover;">
+                    {% if learner.profile_picture %}
+                        <img src="{{ url_for('static', filename='uploads/profiles/' + learner.profile_picture) }}" alt="Profile" class="rounded-circle border border-2 border-teal shadow" style="width: 120px; height: 120px; object-fit: cover;">
+                    {% else %}
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200" alt="Profile" class="rounded-circle border border-2 border-teal shadow" style="width: 120px; height: 120px; object-fit: cover;">
+                    {% endif %}
                     <span class="position-absolute bottom-0 end-0 bg-success border border-white rounded-circle p-2" title="Active"></span>
+                </div>
+                <div class="mb-3">
+                    <button type="button" class="btn btn-sm btn-outline-teal rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                        <i class="fa-solid fa-pen-to-square"></i> Edit Profile
+                    </button>
                 </div>
                 <h4 class="fw-bold text-dark mb-1">{{ learner.name }}</h4>
                 <p class="text-muted small mb-3">@{{ learner.global_id }}</p>
@@ -39,34 +48,90 @@
                         <strong class="text-dark">{{ learner.manager.name }}</strong>
                     </div>
                     {% endif %}
+                    <div class="mt-2">
+                        <small class="text-muted d-block">Date of Birth</small>
+                        <strong class="text-dark">
+                            {% if learner.date_of_birth %}
+                                {{ learner.date_of_birth.strftime('%d %B %Y') }}
+                            {% else %}
+                                Not set
+                            {% endif %}
+                        </strong>
+                    </div>
                 </div>
             </div>
+        </div>
+        
+        <!-- Edit Profile Modal -->
+        <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+              <form action="{{ url_for('learners.view_learner_profile') }}" method="POST" enctype="multipart/form-data">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <div class="modal-header bg-teal text-white border-0">
+                    <h5 class="modal-title fw-bold" id="editProfileModalLabel"><i class="fa-solid fa-user-edit me-2"></i> Edit Profile</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label for="profile_picture" class="form-label fw-bold">Profile Picture</label>
+                        <input type="file" class="form-control" id="profile_picture" name="profile_picture" accept="image/*">
+                    </div>
+                    <div class="mb-3">
+                        <label for="date_of_birth" class="form-label fw-bold">Date of Birth</label>
+                        <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" 
+                               value="{{ learner.date_of_birth.strftime('%Y-%m-%d') if learner.date_of_birth else '' }}">
+                        <div class="form-text mt-2"><i class="fa-solid fa-info-circle text-teal me-1"></i> Your birthday will be celebrated on the Learning Wall!</div>
+                    </div>
+                  </div>
+                  <div class="modal-footer bg-light border-0">
+                    <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-teal fw-bold">Save Changes</button>
+                  </div>
+              </form>
+            </div>
+          </div>
         </div>
 
         <!-- Details & Stats Grid -->
         <div class="col-lg-8">
             <!-- Stats Counters -->
-            <div class="row g-3 mb-4">
+            <div class="row g-3 mb-4 align-items-stretch">
                 <div class="col-sm-4">
-                    <div class="card border-0 shadow-sm p-3.5 text-center bg-warning-subtle border-warning">
-                        <i class="fa-solid fa-star text-warning fs-3 mb-2"></i>
-                        <h3 class="fw-bold text-dark mb-1">{{ learner.points }}</h3>
-                        <small class="text-muted font-monospace fw-bold">Earned Points</small>
+                    <div class="card border-0 shadow-sm p-3.5 text-center bg-warning-subtle border-warning h-100 d-flex flex-column">
+                        <div>
+                            <i class="fa-solid fa-star text-warning fs-3 mb-2"></i>
+                            <h3 class="fw-bold text-dark mb-1">{{ learner.points }}</h3>
+                            <small class="text-muted font-monospace fw-bold d-block mb-3">Earned Points</small>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-dark fw-bold mt-auto" onclick="openShareModal('points', '{{ learner.points }}')">
+                            <i class="fa-solid fa-share-nodes me-1"></i> Share my achievement
+                        </button>
                     </div>
                 </div>
                 <div class="col-sm-4">
-                    <div class="card border-0 shadow-sm p-3.5 text-center bg-info-subtle border-info">
-                        <i class="fa-solid fa-fire text-danger fs-3 mb-2"></i>
-                        <h3 class="fw-bold text-dark mb-1">{{ learner.current_streak }} Days</h3>
-                        <small class="text-muted font-monospace fw-bold">Active Streak</small>
+                    <div class="card border-0 shadow-sm p-3.5 text-center bg-info-subtle border-info h-100 d-flex flex-column">
+                        <div>
+                            <i class="fa-solid fa-fire text-danger fs-3 mb-2"></i>
+                            <h3 class="fw-bold text-dark mb-1">{{ learner.current_streak }} Days</h3>
+                            <small class="text-muted font-monospace fw-bold d-block mb-3">Active Streak</small>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-dark fw-bold mt-auto" onclick="openShareModal('streak', '{{ learner.current_streak }}')">
+                            <i class="fa-solid fa-share-nodes me-1"></i> Share my achievement
+                        </button>
                     </div>
                 </div>
                 <div class="col-sm-4">
-                    <div class="card border-0 shadow-sm p-3.5 text-center bg-success-subtle border-success">
-                        <i class="fa-solid fa-circle-check text-success fs-3 mb-2"></i>
-                        <h3 class="fw-bold text-dark mb-1">{{ completed_enrollments }} / {{ total_enrollments }}</h3>
-                        <small class="text-muted font-monospace fw-bold">Completed Courses</small>
-                    </div>
+                    <a href="{{ url_for('learners.my_portal') }}" class="text-decoration-none h-100 d-block">
+                        <div class="card border-0 shadow-sm p-3.5 text-center bg-success-subtle border-success h-100 d-flex flex-column" style="transition: transform 0.2s;">
+                            <div>
+                                <i class="fa-solid fa-circle-check text-success fs-3 mb-2"></i>
+                                <h3 class="fw-bold text-dark mb-1">{{ completed_enrollments }} / {{ total_enrollments }}</h3>
+                                <small class="text-muted font-monospace fw-bold d-block mb-3">Completed Courses</small>
+                            </div>
+                            <span class="text-success small fw-bold mt-auto"><i class="fa-solid fa-arrow-right me-1"></i> View Courses</span>
+                        </div>
+                    </a>
                 </div>
             </div>
 
@@ -81,7 +146,8 @@
                                 <i class="fa-solid {{ badge.badge_icon or 'fa-award' }} text-teal fs-4"></i>
                             </div>
                             <strong class="d-block text-dark small text-truncate w-100">{{ badge.badge_name }}</strong>
-                            <small class="text-muted text-xxs block mt-1">{{ badge.earned_at.strftime('%d %b %Y') if badge.earned_at else 'Earned' }}</small>
+                            <small class="text-muted text-xxs block mt-1 mb-2">{{ badge.earned_at.strftime('%d %b %Y') if badge.earned_at else 'Earned' }}</small>
+                            <button type="button" class="btn btn-sm btn-outline-teal mt-auto w-100 fw-bold" onclick="openShareModal('badge', '{{ badge.badge_name|escape|replace('\'', '\\\'') }}')"><i class="fa-solid fa-share-nodes"></i> Share</button>
                         </div>
                     </div>
                     {% else %}
@@ -95,4 +161,67 @@
         </div>
     </div>
 </div>
+
+    <!-- Share Achievement Modal -->
+    <div class="modal fade" id="shareAchievementModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header bg-teal text-white py-3 px-4">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-share-nodes me-2"></i> Share Achievement</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form action="{{ url_for('learning_wall.create_moment') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-xs text-uppercase text-muted">Title / Topic</label>
+                            <input type="text" name="title" id="shareTitle" class="form-control rounded-3" required maxlength="100">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-xs text-uppercase text-muted">Select Icon</label>
+                            <select name="icon" id="shareIcon" class="form-select rounded-3">
+                                <option value="fa-trophy">🏆 Achievement</option>
+                                <option value="fa-star">⭐ Milestones</option>
+                                <option value="fa-fire">🔥 Hot Streak</option>
+                                <option value="fa-award">🏅 Badges</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-xs text-uppercase text-muted">Your update</label>
+                            <textarea name="content" id="shareContent" rows="3" class="form-control rounded-3" required maxlength="500"></textarea>
+                        </div>
+                        <div class="text-end mt-4">
+                            <button type="button" class="btn btn-light fw-bold px-4 py-2 rounded-pill me-2" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-teal fw-bold px-4 py-2 rounded-pill"><i class="fa-solid fa-paper-plane me-1"></i> Post to Wall</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+function openShareModal(type, value) {
+    const titleInput = document.getElementById('shareTitle');
+    const contentInput = document.getElementById('shareContent');
+    const iconInput = document.getElementById('shareIcon');
+
+    if (type === 'points') {
+        titleInput.value = "Milestone Unlocked! ⭐";
+        iconInput.value = "fa-star";
+        contentInput.value = `I just reached ${value} Earned Points on Aditya Learning Hub! I am proud of my learning journey so far.`;
+    } else if (type === 'streak') {
+        titleInput.value = "Learning Streak Maintained! 🔥";
+        iconInput.value = "fa-fire";
+        contentInput.value = `I'm on a ${value}-day learning streak! Consistency is key.`;
+    } else if (type === 'badge') {
+        titleInput.value = "New Badge Earned! 🏅";
+        iconInput.value = "fa-award";
+        contentInput.value = `I just earned the "${value}" badge! Feeling accomplished!`;
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('shareAchievementModal'));
+    modal.show();
+}
+</script>
 {% endblock %}

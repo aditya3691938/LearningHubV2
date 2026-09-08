@@ -265,7 +265,7 @@ p, label, input, select, textarea {
 }
 
 /* Table Headers: Plus Jakarta Sans, 600 Weight, 15px */
-table thead th, .table th, .table thead th * {
+table thead th, .table th, .table thead th *:not(i) {
     font-family: var(--font-heading) !important;
     font-weight: 600 !important;
     font-size: 15px !important;
@@ -273,7 +273,7 @@ table thead th, .table th, .table thead th * {
 }
 
 /* Table Content: Inter, 400 Weight, 15px */
-table tbody td, .table td, .table tbody td * {
+table tbody td, .table td, .table tbody td *:not(i) {
     font-family: var(--font-body) !important;
     font-weight: 400 !important;
     font-size: 15px !important;

@@ -395,7 +395,7 @@
                         <a href="{{ url_for('learning_wall.index') }}" class="ls-nav-tab {% if 'learning_wall' in safe_endpoint %}active{% endif %}">
                             Learning Wall
                         </a>
-                        <a href="{{ url_for('super_admin.list_issues') }}" class="ls-nav-tab {% if 'issues' in safe_endpoint %}active{% endif %}">
+                        <a href="{{ url_for('dashboard.list_issues') }}" class="ls-nav-tab {% if 'issues' in safe_endpoint %}active{% endif %}">
                             Tickets
                         </a>
                         {% else %}
@@ -593,7 +593,7 @@
                 <a href="{{ url_for('learning_wall.index') }}" class="mobile-nav-item {% if 'learning_wall' in safe_endpoint %}active{% endif %}">
                     <i class="fa-solid fa-bullhorn me-3 text-warning"></i> Learning Wall Feed
                 </a>
-                <a href="{{ url_for('super_admin.list_issues') }}" class="mobile-nav-item {% if 'issues' in safe_endpoint %}active{% endif %}">
+                <a href="{{ url_for('dashboard.list_issues') }}" class="mobile-nav-item {% if 'issues' in safe_endpoint %}active{% endif %}">
                     <i class="fa-solid fa-headset me-3 text-danger"></i> Tickets Helpdesk
                 </a>
                 {% else %}
